@@ -1,0 +1,18 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check_announcements",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/monitor_positions",
+      "schedule": "* * * * *"
+    }
+  ],
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.11",
+      "maxDuration": 10
+    }
+  }
+}
