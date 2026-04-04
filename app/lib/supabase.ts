@@ -23,6 +23,11 @@ export interface Announcement {
   reasoning: string | null
   analyzed: boolean
   created_at: string
+  attached_files?: Array<{
+    name: string
+    url: string
+    type: string
+  }>
 }
 
 export interface Position {

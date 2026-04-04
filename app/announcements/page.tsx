@@ -108,6 +108,24 @@ export default async function AnnouncementsPage() {
                 </div>
                 <h3 className="font-semibold mb-2">{announcement.title}</h3>
                 <p className="text-sm text-gray-700 mb-2 line-clamp-2">{announcement.content}</p>
+
+                {/* Attached Files */}
+                {announcement.attached_files && announcement.attached_files.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {announcement.attached_files.map((file, idx) => (
+                      <a
+                        key={idx}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100"
+                      >
+                        📎 {file.type.toUpperCase()}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 {announcement.reasoning && (
                   <div className="bg-gray-50 p-3 rounded text-sm">
                     <div className="font-semibold text-gray-700 mb-1">AI Analysis:</div>
