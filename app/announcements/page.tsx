@@ -36,8 +36,8 @@ export default async function AnnouncementsPage() {
   const neutralCount = announcements.filter(a => a.sentiment === 'NEUTRAL').length
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Announcements</h1>
+    <div className="p-4">
+      <h1 className="text-3xl font-bold mb-6">TASE Announcements Dashboard</h1>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -69,86 +69,119 @@ export default async function AnnouncementsPage() {
         </div>
       </div>
 
-      {/* Announcements Feed */}
-      <div className="card">
-        <h2 className="text-xl font-semibold mb-4">Recent Announcements</h2>
-        {announcements.length > 0 ? (
-          <div className="space-y-4">
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className="border-b pb-4 last:border-b-0">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{announcement.company_name}</span>
-                      <span className="text-sm text-gray-500">({announcement.ticker})</span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {formatDateTime(announcement.published_at)}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {announcement.analyzed ? (
-                      <>
-                        <span className={`badge ${
-                          announcement.sentiment === 'POSITIVE' ? 'badge-success' :
-                          announcement.sentiment === 'NEGATIVE' ? 'badge-danger' :
-                          'badge-info'
-                        }`}>
-                          {announcement.sentiment}
-                        </span>
-                        {announcement.confidence !== null && (
-                          <span className="badge badge-info text-xs">
-                            {(announcement.confidence * 100).toFixed(0)}%
-                          </span>
-                        )}
-                      </>
+      {/* Announcements Table */}
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 sticky top-0">
+            <tr>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">#</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">שם חברה</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">תאריך</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">כותרת</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[300px]">תוכן</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">קבצים</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Sentiment</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t0</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t1</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t5</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t10</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t15</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t30</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t45</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t60</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">t90</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">סימול (עב)</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Company (EN)</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ticker (EN)</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {announcements.length > 0 ? (
+              announcements.map((announcement, idx) => (
+                <tr key={announcement.id} className="hover:bg-gray-50">
+                  {/* 1. Serial Number */}
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{idx + 1}</td>
+
+                  {/* 2. Company Name (Hebrew) */}
+                  <td className="px-3 py-4 text-sm text-gray-900 text-right whitespace-nowrap">{announcement.company_name}</td>
+
+                  {/* 3. Timestamp */}
+                  <td className="px-3 py-4 text-sm text-gray-500 text-right whitespace-nowrap">{formatDateTime(announcement.published_at)}</td>
+
+                  {/* 4. Title */}
+                  <td className="px-3 py-4 text-sm text-gray-900 text-right">{announcement.title}</td>
+
+                  {/* 5. Content */}
+                  <td className="px-3 py-4 text-sm text-gray-700 text-right max-w-md">
+                    <div className="line-clamp-3">{announcement.content}</div>
+                  </td>
+
+                  {/* 6. Attached Files */}
+                  <td className="px-3 py-4 text-sm text-center">
+                    {announcement.attached_files && announcement.attached_files.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        {announcement.attached_files.map((file: { name: string; url: string; type: string }, fileIdx: number) => (
+                          <a
+                            key={fileIdx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100"
+                          >
+                            📎 {file.type.toUpperCase()}
+                          </a>
+                        ))}
+                      </div>
                     ) : (
-                      <span className="badge badge-warning text-xs">PENDING</span>
+                      <span className="text-gray-400">-</span>
                     )}
-                  </div>
-                </div>
-                <h3 className="font-semibold mb-2">{announcement.title}</h3>
-                <p className="text-sm text-gray-700 mb-2 line-clamp-2">{announcement.content}</p>
+                  </td>
 
-                {/* Attached Files */}
-                {announcement.attached_files && announcement.attached_files.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {announcement.attached_files.map((file: { name: string; url: string; type: string }, idx: number) => (
-                      <a
-                        key={idx}
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100"
-                      >
-                        📎 {file.type.toUpperCase()}
-                      </a>
-                    ))}
-                  </div>
-                )}
+                  {/* 7. Sentiment */}
+                  <td className="px-3 py-4 text-sm text-center">
+                    {announcement.analyzed ? (
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                        announcement.sentiment === 'POSITIVE' ? 'bg-green-100 text-green-800' :
+                        announcement.sentiment === 'NEGATIVE' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {announcement.sentiment}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">PENDING</span>
+                    )}
+                  </td>
 
-                {announcement.reasoning && (
-                  <div className="bg-gray-50 p-3 rounded text-sm">
-                    <div className="font-semibold text-gray-700 mb-1">AI Analysis:</div>
-                    <div className="text-gray-600">{announcement.reasoning}</div>
-                  </div>
-                )}
-                {announcement.source_url && (
-                  <a
-                    href={announcement.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 text-sm mt-2 inline-block hover:underline"
-                  >
-                    View source →
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">No announcements yet</p>
-        )}
+                  {/* 8-16. Stock Prices (t0, t1, t5, t10, t15, t30, t45, t60, t90) */}
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+
+                  {/* 17. Ticker (Hebrew) */}
+                  <td className="px-3 py-4 text-sm text-gray-900 text-right whitespace-nowrap">{announcement.ticker}</td>
+
+                  {/* 18. Company Name (English) */}
+                  <td className="px-3 py-4 text-sm text-gray-400 text-left whitespace-nowrap">-</td>
+
+                  {/* 19. Ticker (English) */}
+                  <td className="px-3 py-4 text-sm text-gray-400 text-left whitespace-nowrap">-</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={19} className="px-3 py-8 text-center text-gray-500">
+                  No announcements yet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )
