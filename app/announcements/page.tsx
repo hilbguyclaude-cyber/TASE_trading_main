@@ -1,6 +1,7 @@
 import { supabase, type Announcement } from '../lib/supabase'
 
 export const revalidate = 30 // Revalidate every 30 seconds
+// Force deployment: 2026-04-04
 
 async function getAnnouncements() {
   try {
