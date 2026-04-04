@@ -42,70 +42,70 @@ export default async function AnnouncementsPage() {
   }))
 
   return (
-    <div className="p-8">
-      <div className="mb-2">
-        <h1 className="text-3xl font-bold text-gray-900">Announcements</h1>
-        <p className="text-gray-600 mt-1">TASE breaking announcements with AI sentiment analysis</p>
+    <div>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>Announcements</h1>
+        <p style={{ color: '#666', fontSize: '14px' }}>TASE breaking announcements with AI sentiment analysis</p>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
-        <div className="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-6">
-          <div className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Total Announcements</div>
-          <div className="text-4xl font-bold text-gray-900 mt-3">{announcements.length}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #3b82f6', padding: '24px' }}>
+          <div style={{ color: '#6b7280', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>TOTAL ANNOUNCEMENTS</div>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#111827' }}>{announcements.length}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border-l-4 border-green-500 p-6">
-          <div className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Tradeable</div>
-          <div className="text-4xl font-bold text-gray-900 mt-3">{tradeableCount}</div>
-          <div className="text-sm text-gray-500 mt-2">
+        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #10b981', padding: '24px' }}>
+          <div style={{ color: '#6b7280', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>TRADEABLE</div>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#111827' }}>{tradeableCount}</div>
+          <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>
             {announcements.length > 0 ? ((tradeableCount / announcements.length) * 100).toFixed(1) : '0.0'}% of total
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-6">
-          <div className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Processed</div>
-          <div className="text-4xl font-bold text-gray-900 mt-3">{processedCount}</div>
+        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #8b5cf6', padding: '24px' }}>
+          <div style={{ color: '#6b7280', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>PROCESSED</div>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#111827' }}>{processedCount}</div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border-l-4 border-orange-500 p-6">
-          <div className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Pending</div>
-          <div className="text-4xl font-bold text-gray-900 mt-3">{pendingCount}</div>
+        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderLeft: '4px solid #f59e0b', padding: '24px' }}>
+          <div style={{ color: '#6b7280', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>PENDING</div>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#111827' }}>{pendingCount}</div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <div style={{ position: 'relative' }}>
+              <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
                 placeholder="Search ticker, company, title, content..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ width: '100%', paddingLeft: '40px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
               />
             </div>
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px' }}>
             <option>All Sentiments</option>
             <option>Positive</option>
             <option>Negative</option>
             <option>Neutral</option>
             <option>Pending</option>
           </select>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px' }}>
             <option>All Announcements</option>
             <option>Analyzed Only</option>
             <option>Pending Only</option>
           </select>
         </div>
-        <div className="mt-4 text-sm text-gray-600">
+        <div style={{ fontSize: '14px', color: '#6b7280' }}>
           Showing {announcements.length} of {announcements.length} announcements
         </div>
       </div>
 
       {/* Announcements Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         <div className="table-scroll-container">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
