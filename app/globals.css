@@ -47,25 +47,39 @@ body {
   @apply btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800;
 }
 
-/* Material Design Chips/Badges */
+/* Sentiment Badges - Subtle & Professional */
 .badge {
-  @apply px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all duration-200;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
 }
 
 .badge-success {
-  @apply badge bg-green-50 text-green-700 border border-green-200;
+  background: #dcfce7;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 .badge-danger {
-  @apply badge bg-red-50 text-red-700 border border-red-200;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .badge-warning {
-  @apply badge bg-yellow-50 text-yellow-700 border border-yellow-200;
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 .badge-info {
-  @apply badge bg-blue-50 text-blue-700 border border-blue-200;
+  background: #dbeafe;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
 }
 
 /* Material Design Tables */
@@ -131,4 +145,74 @@ body {
 /* Hover Scale Effect */
 .hover-lift {
   @apply transition-transform duration-200 hover:-translate-y-1;
+}
+
+/* Sticky Table Columns */
+.sticky-col {
+  position: sticky;
+  background: white;
+  z-index: 10;
+}
+
+.sticky-col-1 {
+  left: 0;
+  width: 50px;
+}
+
+.sticky-col-2 {
+  left: 50px;
+  width: 140px;
+}
+
+.sticky-col-3 {
+  left: 190px;
+  width: 220px;
+}
+
+/* Table Container with Smooth Scroll */
+.table-scroll-container {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Content Expand/Collapse Animation */
+.content-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.content-expanded {
+  display: block;
+}
+
+.expand-button {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: color 0.15s ease;
+}
+
+.expand-button:hover {
+  color: #1d4ed8;
 }
