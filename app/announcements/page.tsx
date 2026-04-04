@@ -113,7 +113,7 @@ export default async function AnnouncementsPage() {
                 {/* Attached Files */}
                 {announcement.attached_files && announcement.attached_files.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {announcement.attached_files.map((file, idx) => (
+                    {announcement.attached_files.map((file: { name: string; url: string; type: string }, idx: number) => (
                       <a
                         key={idx}
                         href={file.url}
