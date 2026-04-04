@@ -18,7 +18,7 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
 
   const shouldShowExpandButton = announcement.content.length > 100
 
-  const getSentimentBadgeStyle = (sentiment: string) => {
+  const getSentimentBadgeStyle = (sentiment: string | null) => {
     const baseStyle = {
       padding: '6px 12px',
       borderRadius: '6px',
@@ -33,7 +33,7 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       return { ...baseStyle, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }
     } else if (sentiment === 'NEGATIVE') {
       return { ...baseStyle, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }
-    } else if (sentiment === 'PENDING') {
+    } else if (sentiment === 'PENDING' || sentiment === null) {
       return { ...baseStyle, background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }
     } else {
       return { ...baseStyle, background: '#dbeafe', color: '#2563eb', border: '1px solid #bfdbfe' }
@@ -102,7 +102,7 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       <td style={{ padding: '16px 12px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.analyzed ? (
           <span style={getSentimentBadgeStyle(announcement.sentiment)}>
-            {announcement.sentiment}
+            {announcement.sentiment || 'PENDING'}
           </span>
         ) : (
           <span style={getSentimentBadgeStyle('PENDING')}>PENDING</span>
