@@ -4,12 +4,11 @@ import { useState } from 'react'
 import type { Announcement } from '../lib/supabase'
 
 interface AnnouncementRowProps {
-  announcement: Announcement
+  announcement: Announcement & { formattedDate: string }
   index: number
-  formatDateTime: (isoString: string) => string
 }
 
-export function AnnouncementRow({ announcement, index, formatDateTime }: AnnouncementRowProps) {
+export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const truncateContent = (text: string, maxLength: number = 100) => {
@@ -38,7 +37,7 @@ export function AnnouncementRow({ announcement, index, formatDateTime }: Announc
 
       {/* 4. Timestamp */}
       <td className="px-3 py-4 text-sm text-gray-500 text-right whitespace-nowrap">
-        {formatDateTime(announcement.published_at)}
+        {announcement.formattedDate}
       </td>
 
       {/* 5. Content with Expand/Collapse */}

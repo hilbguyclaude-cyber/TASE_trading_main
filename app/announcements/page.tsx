@@ -36,6 +36,12 @@ export default async function AnnouncementsPage() {
   const negativeCount = announcements.filter(a => a.sentiment === 'NEGATIVE').length
   const neutralCount = announcements.filter(a => a.sentiment === 'NEUTRAL').length
 
+  // Format dates on the server side to avoid passing functions to client components
+  const announcementsWithFormattedDates = announcements.map(a => ({
+    ...a,
+    formattedDate: formatDateTime(a.published_at)
+  }))
+
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold mb-6">TASE Announcements Dashboard</h1>
@@ -99,12 +105,11 @@ export default async function AnnouncementsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {announcements.length > 0 ? (
-                announcements.map((announcement, idx) => (
+                announcementsWithFormattedDates.map((announcement, idx) => (
                   <AnnouncementRow
                     key={announcement.id}
                     announcement={announcement}
                     index={idx}
-                    formatDateTime={formatDateTime}
                   />
                 ))
               ) : (
