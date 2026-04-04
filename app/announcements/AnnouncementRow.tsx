@@ -18,37 +18,59 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
 
   const shouldShowExpandButton = announcement.content.length > 100
 
+  const getSentimentBadgeStyle = (sentiment: string) => {
+    const baseStyle = {
+      padding: '6px 12px',
+      borderRadius: '6px',
+      fontSize: '11px',
+      fontWeight: 500,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.025em',
+      display: 'inline-block'
+    }
+
+    if (sentiment === 'POSITIVE') {
+      return { ...baseStyle, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }
+    } else if (sentiment === 'NEGATIVE') {
+      return { ...baseStyle, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }
+    } else if (sentiment === 'PENDING') {
+      return { ...baseStyle, background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }
+    } else {
+      return { ...baseStyle, background: '#dbeafe', color: '#2563eb', border: '1px solid #bfdbfe' }
+    }
+  }
+
   return (
-    <tr className="hover:bg-gray-50 transition-colors duration-150">
+    <tr style={{ transition: 'background-color 0.15s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
       {/* 1. Serial Number - Sticky */}
-      <td className="sticky-col sticky-col-1 px-3 py-4 whitespace-nowrap text-sm text-gray-900 text-right border-r border-gray-200">
+      <td style={{ position: 'sticky', left: 0, background: 'white', zIndex: 10, width: '50px', padding: '16px 12px', whiteSpace: 'nowrap', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
         {index + 1}
       </td>
 
       {/* 2. Company Name (Hebrew) - Sticky */}
-      <td className="sticky-col sticky-col-2 px-3 py-4 text-sm text-gray-900 text-right whitespace-nowrap border-r border-gray-200 font-medium">
+      <td style={{ position: 'sticky', left: '50px', background: 'white', zIndex: 10, width: '140px', padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', fontWeight: 500, borderBottom: '1px solid #e5e7eb' }}>
         {announcement.company_name}
       </td>
 
       {/* 3. Title - Sticky */}
-      <td className="sticky-col sticky-col-3 px-3 py-4 text-sm text-gray-900 text-right border-r-2 border-gray-300">
+      <td style={{ position: 'sticky', left: '190px', background: 'white', zIndex: 10, width: '220px', padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '2px solid #d1d5db', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.title}
       </td>
 
       {/* 4. Timestamp */}
-      <td className="px-3 py-4 text-sm text-gray-500 text-right whitespace-nowrap">
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.formattedDate}
       </td>
 
       {/* 5. Content with Expand/Collapse */}
-      <td className="px-3 py-4 text-sm text-gray-700 text-right" style={{ maxWidth: '300px' }}>
-        <div className={isExpanded ? 'content-expanded' : 'content-collapsed'}>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#374151', textAlign: 'right', maxWidth: '300px', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={isExpanded ? { display: 'block' } : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
           {isExpanded ? announcement.content : truncateContent(announcement.content)}
         </div>
         {shouldShowExpandButton && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="expand-button mt-1 text-right block w-full"
+            style={{ marginTop: '4px', textAlign: 'right', display: 'block', width: '100%', color: '#2563eb', cursor: 'pointer', fontWeight: 500, fontSize: '13px', background: 'none', border: 'none', padding: 0 }}
           >
             {isExpanded ? 'הסתר' : '...קרא עוד'}
           </button>
@@ -56,62 +78,58 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       </td>
 
       {/* 6. Attached Files */}
-      <td className="px-3 py-4 text-sm text-center">
+      <td style={{ padding: '16px 12px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.attached_files && announcement.attached_files.length > 0 ? (
-          <div className="flex flex-col gap-1">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {announcement.attached_files.map((file: { name: string; url: string; type: string }, fileIdx: number) => (
               <a
                 key={fileIdx}
                 href={file.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs hover:bg-blue-100 transition-colors duration-150 badge-info"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', background: '#dbeafe', color: '#2563eb', border: '1px solid #bfdbfe', textDecoration: 'none', transition: 'background-color 0.15s' }}
               >
                 📎 {file.type.toUpperCase()}
               </a>
             ))}
           </div>
         ) : (
-          <span className="text-gray-400">-</span>
+          <span style={{ color: '#9ca3af' }}>-</span>
         )}
       </td>
 
       {/* 7. Sentiment */}
-      <td className="px-3 py-4 text-sm text-center">
+      <td style={{ padding: '16px 12px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.analyzed ? (
-          <span className={`badge ${
-            announcement.sentiment === 'POSITIVE' ? 'badge-success' :
-            announcement.sentiment === 'NEGATIVE' ? 'badge-danger' :
-            'badge-info'
-          }`}>
+          <span style={getSentimentBadgeStyle(announcement.sentiment)}>
             {announcement.sentiment}
           </span>
         ) : (
-          <span className="badge badge-warning">PENDING</span>
+          <span style={getSentimentBadgeStyle('PENDING')}>PENDING</span>
         )}
       </td>
 
       {/* 8-16. Stock Prices (t0-t90) - Placeholders */}
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
-      <td className="px-3 py-4 text-sm text-gray-400 text-center whitespace-nowrap">-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
 
       {/* 17. Ticker (Hebrew) */}
-      <td className="px-3 py-4 text-sm text-gray-900 text-right whitespace-nowrap">
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.ticker}
       </td>
 
       {/* 18. Company Name (English) - Placeholder */}
-      <td className="px-3 py-4 text-sm text-gray-400 text-left whitespace-nowrap">-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
 
       {/* 19. Ticker (English) - Placeholder */}
-      <td className="px-3 py-4 text-sm text-gray-400 text-left whitespace-nowrap">-</td>
+      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
     </tr>
   )
 }

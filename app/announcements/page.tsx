@@ -75,25 +75,20 @@ export default async function AnnouncementsPage() {
       <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
           <div style={{ flex: '1 1 300px' }}>
-            <div style={{ position: 'relative' }}>
-              <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search ticker, company, title, content..."
-                style={{ width: '100%', paddingLeft: '40px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="🔍 Search ticker, company, title, content..."
+              style={{ width: '100%', padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
+            />
           </div>
-          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px' }}>
+          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px', cursor: 'pointer' }}>
             <option>All Sentiments</option>
             <option>Positive</option>
             <option>Negative</option>
             <option>Neutral</option>
             <option>Pending</option>
           </select>
-          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px' }}>
+          <select style={{ padding: '10px 16px', border: '1px solid #d1d5db', borderRadius: '8px', background: 'white', fontSize: '14px', cursor: 'pointer' }}>
             <option>All Announcements</option>
             <option>Analyzed Only</option>
             <option>Pending Only</option>
@@ -106,32 +101,32 @@ export default async function AnnouncementsPage() {
 
       {/* Announcements Table */}
       <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <div className="table-scroll-container">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div style={{ overflowX: 'auto', scrollBehavior: 'smooth' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ background: '#f9fafb' }}>
               <tr>
-                <th className="sticky-col sticky-col-1 px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200">#</th>
-                <th className="sticky-col sticky-col-2 px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200">שם חברה</th>
-                <th className="sticky-col sticky-col-3 px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-r-2 border-gray-300">כותרת</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">תאריך</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider" style={{ minWidth: '300px' }}>תוכן</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">קבצים</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Sentiment</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t0</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t1</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t5</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t10</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t15</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t30</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t45</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t60</th>
-                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">t90</th>
-                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">סימול (עב)</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Company (EN)</th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Ticker (EN)</th>
+                <th style={{ position: 'sticky', left: 0, background: '#f9fafb', zIndex: 10, width: '50px', padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid #e5e7eb', borderBottom: '2px solid #e5e7eb' }}>#</th>
+                <th style={{ position: 'sticky', left: '50px', background: '#f9fafb', zIndex: 10, width: '140px', padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '1px solid #e5e7eb', borderBottom: '2px solid #e5e7eb' }}>שם חברה</th>
+                <th style={{ position: 'sticky', left: '190px', background: '#f9fafb', zIndex: 10, width: '220px', padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', borderRight: '2px solid #d1d5db', borderBottom: '2px solid #e5e7eb' }}>כותרת</th>
+                <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>תאריך</th>
+                <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', minWidth: '300px', borderBottom: '2px solid #e5e7eb' }}>תוכן</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>קבצים</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>Sentiment</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t0</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t1</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t5</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t10</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t15</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t30</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t45</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t60</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>t90</th>
+                <th style={{ padding: '12px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>סימול (עב)</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>Company (EN)</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e5e7eb' }}>Ticker (EN)</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody style={{ background: 'white' }}>
               {announcements.length > 0 ? (
                 announcementsWithFormattedDates.map((announcement, idx) => (
                   <AnnouncementRow
@@ -142,7 +137,7 @@ export default async function AnnouncementsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={19} className="px-3 py-8 text-center text-gray-500">
+                  <td colSpan={19} style={{ padding: '32px 12px', textAlign: 'center', color: '#6b7280' }}>
                     No announcements yet
                   </td>
                 </tr>
