@@ -12,7 +12,6 @@ Can be called manually or triggered automatically after announcements are stored
 
 from datetime import datetime
 from typing import Dict, Any, List
-from http.server import BaseHTTPRequestHandler
 import json
 import logging
 import time
@@ -295,40 +294,29 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
         }
 
 
-class handler(BaseHTTPRequestHandler):
-    """Vercel serverless function handler"""
+def handler(request):
+    """
+    Vercel serverless function handler.
 
-    def do_POST(self):
-        """Handle POST request to analyze sentiments"""
-        try:
-            # Parse request body (optional parameters)
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length > 0:
-                body = self.rfile.read(content_length)
-                params = json.loads(body.decode('utf-8'))
-            else:
-                params = {}
+    Supports two modes:
+    1. POST with announcement_id - Single announcement (database trigger)
+    2. GET with no params - Batch processing (existing cron, backwards compatible)
+    """
+    if request.method == 'POST':
+        # Single announcement mode (database trigger)
+        data = request.get_json()
+        announcement_id = data.get('announcement_id')
 
-            max_announcements = params.get('max_announcements', 10)
+        if not announcement_id:
+            return {'error': 'announcement_id required'}, 400
 
-            result = analyze_pending_sentiments(max_announcements)
+        result = analyze_single_announcement(announcement_id)
+        return result, 200 if result['success'] else 500
 
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(result).encode())
-
-        except Exception as e:
-            log_system_event('ERROR', 'analyze_sentiment', f"Function failed: {e}", {})
-
-            self.send_response(500)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'error': str(e)}).encode())
-
-    def do_GET(self):
-        """Handle GET request (same as POST for convenience)"""
-        self.do_POST()
+    else:
+        # Batch mode (existing cron) - keep for backwards compatibility
+        result = analyze_pending_sentiments(max_announcements=10)
+        return result, 200
 
 
 def analyze_pending_sentiments(max_announcements: int = 10) -> Dict[str, Any]:
