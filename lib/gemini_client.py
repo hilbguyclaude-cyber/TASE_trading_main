@@ -8,9 +8,13 @@ TASE announcements and determine trading sentiment with confidence scores.
 import os
 import json
 import time
+import logging
 from typing import Dict, Any
 import google.generativeai as genai
+import google.api_core.exceptions
 from lib.db import log_system_event
+
+logger = logging.getLogger(__name__)
 
 
 # Custom exceptions
@@ -169,150 +173,71 @@ def analyze_announcement_sentiment(
     company_name: str,
     ticker: str,
     title: str,
-    content: str,
-    max_retries: int = 3
+    content: str
 ) -> Dict[str, Any]:
     """
-    Analyze TASE announcement sentiment using Gemini 1.5 Flash.
-
-    Makes API call to Gemini with retry logic for rate limiting.
-    Returns sentiment classification, confidence score, and reasoning.
-
-    Args:
-        company_name: Name of the company
-        ticker: Stock ticker symbol
-        title: Announcement title
-        content: Announcement content
-        max_retries: Maximum number of retry attempts (default: 3)
+    Call Gemini API with explicit timeout and normalize response.
 
     Returns:
-        Dict with keys:
-            - sentiment: 'POSITIVE', 'NEGATIVE', or 'NEUTRAL'
-            - confidence: float between 0.0 and 1.0
-            - reasoning: str explanation of the sentiment
+        Dict with:
+        - sentiment: str - 'positive', 'negative', or 'neutral' (normalized)
+        - reasoning: str - Explanation of sentiment
+        - confidence: None - Not returned by current prompt
+        - raw_response: dict - Full API response for audit
 
     Raises:
-        GeminiRateLimitError: If rate limit exceeded after max retries
-        GeminiAuthError: If API authentication fails
-        ValueError: If response format is invalid
-        Exception: For other API errors
-
-    Example:
-        >>> result = analyze_announcement_sentiment(
-        ...     company_name="Bank Leumi",
-        ...     ticker="LUMI",
-        ...     title="Q4 Earnings",
-        ...     content="15% profit increase..."
-        ... )
-        >>> print(result)
-        {
-            'sentiment': 'POSITIVE',
-            'confidence': 0.85,
-            'reasoning': 'Strong earnings growth...'
-        }
+        TimeoutError: If Gemini API exceeds 10s timeout
+        ValueError: If response parsing fails
     """
     # Get API key from environment
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
-        log_system_event(
-            level='ERROR',
-            component='gemini_client',
-            message='GEMINI_API_KEY environment variable not set'
-        )
+        logger.error("[GEMINI] GEMINI_API_KEY environment variable not set")
         raise GeminiAuthError("GEMINI_API_KEY environment variable not set")
 
     # Configure Gemini
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
-    # Build prompt
-    prompt = _build_analysis_prompt(company_name, title, content)
+    try:
+        prompt = _build_analysis_prompt(company_name, title, content)
 
-    # Retry loop with exponential backoff
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            log_system_event(
-                level='INFO',
-                component='gemini_client',
-                message=f'Calling Gemini API (attempt {attempt + 1}/{max_retries})',
-                metadata={
-                    'company_name': company_name,
-                    'ticker': ticker,
-                    'title': title
-                }
-            )
+        # Call Gemini with 10-second timeout
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                'temperature': 0.1,
+                'top_p': 0.95,
+                'max_output_tokens': 500,
+            },
+            request_options={
+                'timeout': 10  # 10 second timeout
+            }
+        )
 
-            response = model.generate_content(prompt)
-            result = _parse_gemini_response(response.text)
+        # Parse JSON response
+        response_json = json.loads(response.text)
 
-            log_system_event(
-                level='INFO',
-                component='gemini_client',
-                message='Successfully analyzed sentiment',
-                metadata={
-                    'company_name': company_name,
-                    'ticker': ticker,
-                    'sentiment': result['sentiment'],
-                    'confidence': result['confidence']
-                }
-            )
+        # Normalize sentiment: "positive sentiment" → "positive"
+        raw_sentiment = response_json.get('sentiment', '').lower()
+        if 'positive' in raw_sentiment:
+            sentiment = 'positive'
+        elif 'negative' in raw_sentiment:
+            sentiment = 'negative'
+        else:
+            sentiment = 'neutral'
 
-            return result
+        return {
+            'sentiment': sentiment,
+            'reasoning': response_json.get('reasoning', ''),
+            'confidence': None,  # Not returned by user's prompt
+            'raw_response': response_json  # Store full response for audit
+        }
 
-        except Exception as e:
-            error_message = str(e)
-            last_error = e
+    except google.api_core.exceptions.DeadlineExceeded:
+        logger.error(f"[GEMINI] API timeout (>10s) for {company_name}")
+        raise TimeoutError(f"Gemini API timeout after 10s")
 
-            # Check for authentication errors (don't retry)
-            if _is_auth_error(error_message):
-                log_system_event(
-                    level='ERROR',
-                    component='gemini_client',
-                    message='Gemini authentication failed',
-                    metadata={'error': error_message}
-                )
-                raise GeminiAuthError(f"Authentication failed: {error_message}")
-
-            # Check for rate limit errors (retry with backoff)
-            if _is_rate_limit_error(error_message):
-                if attempt < max_retries - 1:
-                    backoff_time = 2 ** attempt
-                    log_system_event(
-                        level='WARNING',
-                        component='gemini_client',
-                        message=f'Rate limit hit, retrying in {backoff_time}s',
-                        metadata={
-                            'attempt': attempt + 1,
-                            'max_retries': max_retries,
-                            'backoff_seconds': backoff_time
-                        }
-                    )
-                    time.sleep(backoff_time)
-                    continue
-                else:
-                    log_system_event(
-                        level='ERROR',
-                        component='gemini_client',
-                        message='Rate limit exceeded, max retries reached',
-                        metadata={'max_retries': max_retries}
-                    )
-                    raise GeminiRateLimitError(
-                        f"Rate limit exceeded after {max_retries} retries: {error_message}"
-                    )
-
-            # For other errors, log and re-raise
-            log_system_event(
-                level='ERROR',
-                component='gemini_client',
-                message='Gemini API call failed',
-                metadata={
-                    'error': error_message,
-                    'attempt': attempt + 1,
-                    'max_retries': max_retries
-                }
-            )
-            raise
-
-    # Should not reach here, but just in case
-    raise last_error
+    except json.JSONDecodeError as e:
+        logger.error(f"[GEMINI] Invalid JSON response: {response.text}")
+        raise ValueError(f"Invalid JSON from Gemini: {str(e)}")
