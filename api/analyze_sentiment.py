@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Dict, Any, List
 from http.server import BaseHTTPRequestHandler
 import json
+import logging
+import time
 import sys
 import os
 
@@ -29,6 +31,18 @@ from lib.db import (
 from lib.gemini_client import analyze_announcement_sentiment, GeminiRateLimitError, GeminiAuthError
 from lib.yfinance_client import get_current_price, get_price_with_fallback
 from lib.trading_logic import should_buy
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
+def should_create_position() -> bool:
+    """
+    Check if automatic position creation is enabled.
+    Reads from environment variable, defaults to True.
+    """
+    return os.getenv('AUTO_CREATE_POSITIONS', 'true').lower() == 'true'
 
 
 class handler(BaseHTTPRequestHandler):
