@@ -162,13 +162,8 @@ export default async function Dashboard() {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="stat-card group">
-          <div className="flex justify-between items-start mb-4">
+          <div className="mb-4">
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Positions</div>
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
           </div>
           <div className="text-4xl font-bold text-gray-900 mb-2">{data.stats.totalPositions}</div>
           <div className="text-sm text-gray-600">
@@ -178,15 +173,8 @@ export default async function Dashboard() {
         </div>
 
         <div className="stat-card group">
-          <div className="flex justify-between items-start mb-4">
+          <div className="mb-4">
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total P/L</div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:opacity-90 transition-colors ${
-              data.stats.totalProfitLoss >= 0 ? 'bg-green-100' : 'bg-red-100'
-            }`}>
-              <svg className={`w-5 h-5 ${data.stats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
           </div>
           <div className={`text-4xl font-bold mb-2 ${data.stats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatCurrency(data.stats.totalProfitLoss)}
@@ -195,26 +183,16 @@ export default async function Dashboard() {
         </div>
 
         <div className="stat-card group">
-          <div className="flex justify-between items-start mb-4">
+          <div className="mb-4">
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Win Rate</div>
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
           </div>
           <div className="text-4xl font-bold text-gray-900 mb-2">{data.stats.winRate.toFixed(1)}%</div>
           <div className="text-sm text-gray-600">Success rate of closed positions</div>
         </div>
 
         <div className="stat-card group">
-          <div className="flex justify-between items-start mb-4">
+          <div className="mb-4">
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Avg Hold Time</div>
-            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-              <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
           </div>
           <div className="text-4xl font-bold text-gray-900 mb-2">{data.stats.avgHoldTime.toFixed(0)}</div>
           <div className="text-sm text-gray-600">Minutes per position</div>
@@ -229,7 +207,7 @@ export default async function Dashboard() {
             <h2 className="text-2xl font-bold text-gray-900">Recent Announcements</h2>
             <a href="/announcements" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
               View all
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '16px', height: '16px', marginLeft: '4px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </a>
@@ -263,7 +241,7 @@ export default async function Dashboard() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '64px', height: '64px', color: '#d1d5db', margin: '0 auto 16px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-gray-500 font-medium">No announcements yet</p>
@@ -278,7 +256,7 @@ export default async function Dashboard() {
             <h2 className="text-2xl font-bold text-gray-900">Recent Positions</h2>
             <a href="/positions" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
               View all
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '16px', height: '16px', marginLeft: '4px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </a>
@@ -297,7 +275,7 @@ export default async function Dashboard() {
                       </div>
                       <div className="text-sm text-gray-600 mb-1">
                         {formatCurrency(position.entry_price)}
-                        <svg className="w-3 h-3 inline mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg style={{width: '12px', height: '12px', display: 'inline', margin: '0 4px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                         {position.exit_price ? formatCurrency(position.exit_price) : 'Monitoring'}
@@ -321,7 +299,7 @@ export default async function Dashboard() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '64px', height: '64px', color: '#d1d5db', margin: '0 auto 16px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               <p className="text-gray-500 font-medium">No positions yet</p>
@@ -333,60 +311,49 @@ export default async function Dashboard() {
 
       {/* Sentiment Correlation Info */}
       <div className="card-elevated">
-        <div className="flex items-start space-x-4">
-          <div className="flex-shrink-0">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">AI-Powered Sentiment Trading</h2>
+        <p className="text-gray-600 mb-6">
+          This system uses advanced AI to analyze TASE announcements in real-time, determining sentiment and confidence levels to make automated trading decisions.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border border-green-200">
+            <div className="flex items-center space-x-2 mb-2">
+              <div style={{width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <svg style={{width: '16px', height: '16px', color: 'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="text-green-900 font-bold">POSITIVE</span>
             </div>
-          </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">AI-Powered Sentiment Trading</h2>
-            <p className="text-gray-600 mb-6">
-              This system uses advanced AI to analyze TASE announcements in real-time, determining sentiment and confidence levels to make automated trading decisions.
+            <p className="text-sm text-green-800">
+              Triggers BUY when confidence ≥ 70%
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border border-green-200">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-green-900 font-bold">POSITIVE</span>
-                </div>
-                <p className="text-sm text-green-800">
-                  Triggers BUY when confidence ≥ 70%
-                </p>
+          </div>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+            <div className="flex items-center space-x-2 mb-2">
+              <div style={{width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <svg style={{width: '16px', height: '16px', color: 'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
               </div>
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
-                  </div>
-                  <span className="text-gray-900 font-bold">NEUTRAL</span>
-                </div>
-                <p className="text-sm text-gray-800">
-                  No action - position not created
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-5 rounded-xl border border-red-200">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                  <span className="text-red-900 font-bold">NEGATIVE</span>
-                </div>
-                <p className="text-sm text-red-800">
-                  No action - position not created
-                </p>
-              </div>
+              <span className="text-gray-900 font-bold">NEUTRAL</span>
             </div>
+            <p className="text-sm text-gray-800">
+              No action - position not created
+            </p>
+          </div>
+          <div className="bg-gradient-to-br from-red-50 to-red-100 p-5 rounded-xl border border-red-200">
+            <div className="flex items-center space-x-2 mb-2">
+              <div style={{width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <svg style={{width: '16px', height: '16px', color: 'white'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <span className="text-red-900 font-bold">NEGATIVE</span>
+            </div>
+            <p className="text-sm text-red-800">
+              No action - position not created
+            </p>
           </div>
         </div>
       </div>
