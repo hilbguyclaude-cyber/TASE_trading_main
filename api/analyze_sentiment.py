@@ -48,6 +48,51 @@ def should_create_position() -> bool:
     return os.getenv('AUTO_CREATE_POSITIONS', 'true').lower() == 'true'
 
 
+def create_trading_position(announcement: Dict[str, Any], sentiment_result: Dict[str, Any]) -> None:
+    """
+    Create a trading position for a positive sentiment announcement.
+
+    Args:
+        announcement: Announcement data from database
+        sentiment_result: Sentiment analysis result from Gemini
+    """
+    client = get_supabase_client()
+
+    try:
+        # Fetch current price
+        current_price = get_price_with_fallback(
+            announcement['ticker'],
+            fallback_price=None
+        )
+
+        # Create position
+        position_data = {
+            'ticker': announcement['ticker'],
+            'company_name': announcement['company_name'],
+            'announcement_id': announcement['id'],
+            'entry_price': current_price,
+            'peak_price': current_price,
+            'position_size_ils': 1000.0,  # Default position size
+            'entry_time': get_israel_time().isoformat(),
+            'sentiment': sentiment_result['sentiment'],
+            'confidence': None,
+            'reasoning': sentiment_result['reasoning'],
+            'entry_reason': 'Positive sentiment from Gemini analysis'
+        }
+
+        client.table('positions').insert(position_data).execute()
+
+        logger.info(
+            f"[GEMINI] Created position for {announcement['ticker']}: "
+            f"₪{position_data['position_size_ils']:.2f} @ {current_price:.2f}"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"[GEMINI] Failed to create position for {announcement['ticker']}: {e}"
+        )
+
+
 def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
     """
     Analyze a single announcement by ID (called by database trigger).
@@ -127,7 +172,24 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
 
         logger.info(f"[GEMINI] Inserted audit record into gemini_analyses")
 
-        # TODO: Task 9 will add position creation and success return here
+        # Optionally create trading position (if flag enabled)
+        if should_create_position() and sentiment_result['sentiment'] == 'positive':
+            logger.info(f"[GEMINI] Creating trading position (auto-create enabled)")
+            create_trading_position(announcement, sentiment_result)
+        elif sentiment_result['sentiment'] != 'positive':
+            logger.info(f"[GEMINI] Skipping position creation (sentiment: {sentiment_result['sentiment']})")
+        else:
+            logger.info(f"[GEMINI] Skipping position creation (auto-create disabled)")
+
+        total_duration = (time.time() - start_time) * 1000
+        logger.info(f"[GEMINI] ✓ Complete in {total_duration:.0f}ms - Sentiment: {sentiment_result['sentiment']}")
+
+        return {
+            'success': True,
+            'announcement_id': announcement_id,
+            'sentiment': sentiment_result['sentiment'],
+            'processing_time_ms': int(total_duration)
+        }
 
     except Exception as e:
         # Temporary exception handler - will be replaced in Task 10
