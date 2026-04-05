@@ -76,92 +76,6 @@ You must return your analysis strictly as a JSON object with exactly two keys:
     return f"{system_instructions}\n\n{user_prompt}\n{output_format}"
 
 
-def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
-    """
-    Parse and validate Gemini API JSON response.
-
-    Accepts both formats:
-    - Old: "POSITIVE", "NEGATIVE", "NEUTRAL"
-    - New: "positive sentiment", "negative sentiment", "neutral"
-
-    Returns:
-        Dict with sentiment, reasoning, confidence (optional), and raw_response
-
-    Raises:
-        ValueError: If JSON is invalid or required fields missing
-    """
-    try:
-        data = json.loads(response_text)
-    except json.JSONDecodeError as e:
-        log_system_event(
-            level='ERROR',
-            component='gemini_client',
-            message='Failed to parse JSON response from Gemini',
-            metadata={'response': response_text, 'error': str(e)}
-        )
-        raise ValueError(f"Failed to parse JSON response: {e}")
-
-    # Validate required fields (confidence is now optional)
-    required_fields = ['sentiment', 'reasoning']
-    missing_fields = [field for field in required_fields if field not in data]
-
-    if missing_fields:
-        log_system_event(
-            level='ERROR',
-            component='gemini_client',
-            message='Missing required fields in Gemini response',
-            metadata={'response': data, 'missing_fields': missing_fields}
-        )
-        raise ValueError(f"Missing required field(s): {', '.join(missing_fields)}")
-
-    # Validate sentiment value (accept both old uppercase and new phrase formats)
-    valid_sentiments = [
-        'POSITIVE', 'NEGATIVE', 'NEUTRAL',  # Old format
-        'positive sentiment', 'negative sentiment', 'neutral'  # New format
-    ]
-    if data['sentiment'] not in valid_sentiments:
-        log_system_event(
-            level='WARNING',
-            component='gemini_client',
-            message='Invalid sentiment value in Gemini response',
-            metadata={'sentiment': data['sentiment'], 'expected': valid_sentiments}
-        )
-
-    # Validate confidence range (only if present)
-    confidence = data.get('confidence')
-    if confidence is not None:
-        if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
-            log_system_event(
-                level='WARNING',
-                component='gemini_client',
-                message='Invalid confidence value in Gemini response',
-                metadata={'confidence': confidence}
-            )
-
-    # Return with confidence set to None if missing
-    return {
-        'sentiment': data['sentiment'],
-        'reasoning': data['reasoning'],
-        'confidence': confidence,
-        'raw_response': data
-    }
-
-
-def _is_rate_limit_error(error_message: str) -> bool:
-    """
-    Check if error message indicates rate limiting.
-
-    Args:
-        error_message: Error message string
-
-    Returns:
-        bool: True if error is rate limit related
-    """
-    error_lower = error_message.lower()
-    rate_limit_indicators = ['429', 'rate limit', 'quota', 'exhausted']
-    return any(indicator in error_lower for indicator in rate_limit_indicators)
-
-
 def _is_auth_error(error_message: str) -> bool:
     """
     Check if error message indicates authentication failure.
@@ -242,13 +156,33 @@ def analyze_announcement_sentiment(
         # Parse JSON response
         response_json = json.loads(response.text)
 
-        # Normalize sentiment: "positive sentiment" → "positive"
-        raw_sentiment = response_json.get('sentiment', '').lower()
-        if 'positive' in raw_sentiment:
+        # Validate required fields exist
+        if 'sentiment' not in response_json or 'reasoning' not in response_json:
+            error_message = f"Missing required fields in response: {response_json}"
+            log_system_event(
+                level='ERROR',
+                component='gemini_client',
+                message='Gemini response missing required fields',
+                metadata={'response': response_json}
+            )
+            raise ValueError(f"Invalid response structure: missing required fields")
+
+        # Normalize sentiment with exact matching
+        raw_sentiment = response_json.get('sentiment', '').strip().lower()
+        if raw_sentiment == 'positive sentiment':
             sentiment = 'positive'
-        elif 'negative' in raw_sentiment:
+        elif raw_sentiment == 'negative sentiment':
             sentiment = 'negative'
+        elif raw_sentiment == 'neutral':
+            sentiment = 'neutral'
         else:
+            # Log unexpected format but default to neutral
+            log_system_event(
+                level='WARNING',
+                component='gemini_client',
+                message=f'Unexpected sentiment format: {raw_sentiment}',
+                metadata={'raw_sentiment': raw_sentiment}
+            )
             sentiment = 'neutral'
 
         result = {
