@@ -304,17 +304,25 @@ def handler(request):
     """
     if request.method == 'POST':
         # Single announcement mode (database trigger)
-        data = request.get_json()
+        logger.info("[HANDLER] POST request received for single announcement processing")
+
+        try:
+            data = request.get_json()
+        except Exception as e:
+            logger.error(f"[HANDLER] Invalid JSON in POST request: {str(e)}")
+            return {'error': 'Invalid JSON'}, 400
+
         announcement_id = data.get('announcement_id')
 
         if not announcement_id:
             return {'error': 'announcement_id required'}, 400
 
         result = analyze_single_announcement(announcement_id)
-        return result, 200 if result['success'] else 500
+        return result, 200 if result.get('success') else 500
 
     else:
         # Batch mode (existing cron) - keep for backwards compatibility
+        logger.info("[HANDLER] GET request received for batch processing")
         result = analyze_pending_sentiments(max_announcements=10)
         return result, 200
 
