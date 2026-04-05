@@ -93,7 +93,7 @@ serve(async (req) => {
 
         if (retryCount >= MAX_RETRIES) {
           // Move to failed (dead letter queue)
-          await supabaseClient
+          const { error: failedUpdateError } = await supabaseClient
             .from('announcement_processing_queue')
             .update({
               status: 'failed',
@@ -102,10 +102,14 @@ serve(async (req) => {
             })
             .eq('id', item.id)
 
-          console.log(`[QUEUE] ⚠️  Moved to failed after ${retryCount} retries`)
+          if (failedUpdateError) {
+            console.error(`[QUEUE] Failed to mark item ${item.id} as failed:`, failedUpdateError)
+          } else {
+            console.log(`[QUEUE] ⚠️  Moved to failed after ${retryCount} retries`)
+          }
         } else {
-          // Reset to pending for retry with exponential backoff
-          await supabaseClient
+          // Reset to pending for retry
+          const { error: retryUpdateError } = await supabaseClient
             .from('announcement_processing_queue')
             .update({
               status: 'pending',
@@ -114,7 +118,11 @@ serve(async (req) => {
             })
             .eq('id', item.id)
 
-          console.log(`[QUEUE] 🔄 Retry ${retryCount}/${MAX_RETRIES}`)
+          if (retryUpdateError) {
+            console.error(`[QUEUE] Failed to reset item ${item.id} for retry:`, retryUpdateError)
+          } else {
+            console.log(`[QUEUE] 🔄 Retry ${retryCount}/${MAX_RETRIES}`)
+          }
         }
 
         results.push({ id: item.id, success: false, error: errorMessage })
