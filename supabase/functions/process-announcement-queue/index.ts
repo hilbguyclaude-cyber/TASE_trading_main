@@ -86,8 +86,37 @@ serve(async (req) => {
 
       } catch (error) {
         console.error(`[QUEUE] ✗ Failed ${item.announcement_id}:`, error)
-        // Error handling will be added in next step
         const errorMessage = error instanceof Error ? error.message : String(error)
+
+        // Increment retry count
+        const retryCount = (item.retry_count || 0) + 1
+
+        if (retryCount >= MAX_RETRIES) {
+          // Move to failed (dead letter queue)
+          await supabaseClient
+            .from('announcement_processing_queue')
+            .update({
+              status: 'failed',
+              error_message: errorMessage,
+              processed_at: new Date().toISOString()
+            })
+            .eq('id', item.id)
+
+          console.log(`[QUEUE] ⚠️  Moved to failed after ${retryCount} retries`)
+        } else {
+          // Reset to pending for retry with exponential backoff
+          await supabaseClient
+            .from('announcement_processing_queue')
+            .update({
+              status: 'pending',
+              retry_count: retryCount,
+              error_message: errorMessage
+            })
+            .eq('id', item.id)
+
+          console.log(`[QUEUE] 🔄 Retry ${retryCount}/${MAX_RETRIES}`)
+        }
+
         results.push({ id: item.id, success: false, error: errorMessage })
       }
     }
