@@ -43,27 +43,27 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
   return (
     <tr style={{ transition: 'background-color 0.15s ease' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}>
       {/* 1. Serial Number - Sticky */}
-      <td style={{ position: 'sticky', left: 0, background: 'white', zIndex: 10, width: '50px', padding: '16px 12px', whiteSpace: 'nowrap', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ position: 'sticky', left: 0, background: 'white', zIndex: 10, minWidth: '80px', padding: '20px 16px', whiteSpace: 'nowrap', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
         {index + 1}
       </td>
 
       {/* 2. Company Name (Hebrew) - Sticky */}
-      <td style={{ position: 'sticky', left: '50px', background: 'white', zIndex: 10, width: '140px', padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', fontWeight: 500, borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ position: 'sticky', left: '80px', background: 'white', zIndex: 10, minWidth: '180px', padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', fontWeight: 500, borderBottom: '1px solid #e5e7eb' }}>
         {announcement.company_name}
       </td>
 
       {/* 3. Title - Sticky */}
-      <td style={{ position: 'sticky', left: '190px', background: 'white', zIndex: 10, width: '220px', padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '2px solid #d1d5db', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ position: 'sticky', left: '260px', background: 'white', zIndex: 10, minWidth: '300px', padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '2px solid #d1d5db', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.title}
       </td>
 
       {/* 4. Timestamp */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.formattedDate}
       </td>
 
       {/* 5. Content with Expand/Collapse */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#374151', textAlign: 'right', maxWidth: '300px', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#374151', textAlign: 'right', minWidth: '400px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={isExpanded ? { display: 'block' } : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
           {isExpanded ? announcement.content : truncateContent(announcement.content)}
         </div>
@@ -78,7 +78,7 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       </td>
 
       {/* 6. Attached Files */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ padding: '20px 16px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.attached_files && announcement.attached_files.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {announcement.attached_files.map((file: { name: string; url: string; type: string }, fileIdx: number) => (
@@ -99,7 +99,7 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       </td>
 
       {/* 7. Sentiment */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ padding: '20px 16px', fontSize: '14px', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.analyzed ? (
           <span style={getSentimentBadgeStyle(announcement.sentiment)}>
             {announcement.sentiment || 'PENDING'}
@@ -110,26 +110,26 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       </td>
 
       {/* 8-16. Stock Prices (t0-t90) - Placeholders */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
 
       {/* 17. Ticker (Hebrew) */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.ticker}
       </td>
 
       {/* 18. Company Name (English) - Placeholder */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
 
       {/* 19. Ticker (English) - Placeholder */}
-      <td style={{ padding: '16px 12px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#9ca3af', textAlign: 'left', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb' }}>-</td>
     </tr>
   )
 }

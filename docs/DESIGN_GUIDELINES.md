@@ -150,7 +150,7 @@ These guidelines ensure consistent design across all pages in the TASE Trading D
 
 ## 📊 Tables
 
-### Container
+### Container (Horizontally Scrollable)
 ```tsx
 <div style={{
   background: 'white',
@@ -158,16 +158,21 @@ These guidelines ensure consistent design across all pages in the TASE Trading D
   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   overflow: 'hidden'
 }}>
-  <div style={{ overflowX: 'auto', scrollBehavior: 'smooth' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+  <div style={{ overflowX: 'auto', scrollBehavior: 'smooth', maxWidth: '100%' }}>
+    <table style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse' }}>
 ```
 
-### Table Headers
+**Key properties for horizontal scrolling:**
+- Container: `overflowX: 'auto'` + `maxWidth: '100%'`
+- Table: `width: 'max-content'` + `minWidth: '100%'`
+- This ensures table scrolls horizontally when content exceeds viewport
+
+### Table Headers (Generous Spacing)
 ```tsx
 <thead style={{ background: '#f9fafb' }}>
   <tr>
     <th style={{
-      padding: '12px',
+      padding: '16px 20px',  // Bigger padding for spacious feel
       textAlign: 'right',  // Or 'left', 'center'
       fontSize: '12px',
       fontWeight: 600,
@@ -175,23 +180,42 @@ These guidelines ensure consistent design across all pages in the TASE Trading D
       textTransform: 'uppercase',
       letterSpacing: '0.5px',
       whiteSpace: 'nowrap',
-      borderBottom: '2px solid #e5e7eb'
+      minWidth: '100px',  // Ensures minimum column width
+      borderBottom: '1px solid #e5e7eb'  // Subtle 1px border
     }}>HEADER</th>
   </tr>
 </thead>
 ```
 
-### Sticky Columns (optional for wide tables)
+**Padding:** `16px 20px` (vertical horizontal) - more spacious than compact tables
+
+**Column sizing guidelines:**
+- Narrow columns (serial numbers, checkboxes): `minWidth: '80px'`
+- Medium columns (dates, numbers, short text): `minWidth: '100-180px'`
+- Wide columns (titles, names): `minWidth: '200-300px'`
+- Extra-wide columns (content, descriptions): `minWidth: '400px'`
+
+### Sticky Columns (for wide scrollable tables)
 ```tsx
 <th style={{
   position: 'sticky',
-  left: 0,  // Or '50px', '190px' for subsequent columns
+  left: 0,  // First sticky column at left: 0
+  // left: '80px',  // Second sticky column (after 80px first column)
+  // left: '260px',  // Third sticky column (after 80px + 180px)
   background: '#f9fafb',
   zIndex: 10,
+  minWidth: '80px',
+  padding: '16px 20px',
   // ... other th styles
   borderRight: '1px solid #e5e7eb'  // Visual separator
 }}>
 ```
+
+**Sticky column positioning:**
+- Calculate `left` by summing widths of all previous sticky columns
+- Example: Column 1 (80px) → Column 2 left: '80px' → Column 3 left: '260px' (80+180)
+- Always set `background` to match header/row background
+- Use `borderRight` with thicker border (2px) on last sticky column for clear separation
 
 ### Table Body
 ```tsx
@@ -207,16 +231,19 @@ These guidelines ensure consistent design across all pages in the TASE Trading D
 >
 ```
 
-### Table Cells
+### Table Cells (Generous Spacing)
 ```tsx
 <td style={{
-  padding: '16px 12px',
+  padding: '20px 16px',  // Bigger padding matching headers
   fontSize: '14px',
   color: '#111827',  // Or '#6b7280' for secondary text
   textAlign: 'right',  // Match header alignment
+  minWidth: '100px',  // Match header minWidth
   borderBottom: '1px solid #e5e7eb'
 }}>
 ```
+
+**Cell padding:** `20px 16px` (vertical horizontal) - matches header padding for consistent spacing
 
 ---
 
