@@ -84,6 +84,23 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'announcement_id': announcement_id
             }
 
+        # TODO: Tasks 8-10 will add Gemini call, position creation, and error handling here
+        # Temporary return for incomplete implementation
+        return {
+            'success': False,
+            'error': 'Not yet implemented - Tasks 8-10 incomplete',
+            'announcement_id': announcement_id
+        }
+
+    except Exception as e:
+        # Temporary exception handler - will be replaced in Task 10
+        logger.error(f"[GEMINI] Error analyzing announcement {announcement_id}: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e),
+            'announcement_id': announcement_id
+        }
+
 
 class handler(BaseHTTPRequestHandler):
     """Vercel serverless function handler"""
