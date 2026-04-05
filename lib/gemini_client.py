@@ -84,7 +84,7 @@ def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
         response_text: Raw response text from Gemini
 
     Returns:
-        Dict with sentiment, confidence, and reasoning
+        Dict with sentiment, confidence (optional), and reasoning
 
     Raises:
         ValueError: If response is invalid JSON or missing required fields
@@ -100,8 +100,8 @@ def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
         )
         raise ValueError(f"Failed to parse JSON response: {e}")
 
-    # Validate required fields
-    required_fields = ['sentiment', 'confidence', 'reasoning']
+    # Validate required fields (confidence is now optional)
+    required_fields = ['sentiment', 'reasoning']
     missing_fields = [field for field in required_fields if field not in data]
 
     if missing_fields:
@@ -113,8 +113,11 @@ def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
         )
         raise ValueError(f"Missing required field(s): {', '.join(missing_fields)}")
 
-    # Validate sentiment value
-    valid_sentiments = ['POSITIVE', 'NEGATIVE', 'NEUTRAL']
+    # Validate sentiment value (accept both old uppercase and new phrase formats)
+    valid_sentiments = [
+        'POSITIVE', 'NEGATIVE', 'NEUTRAL',  # Old format
+        'positive sentiment', 'negative sentiment', 'neutral'  # New format
+    ]
     if data['sentiment'] not in valid_sentiments:
         log_system_event(
             level='WARNING',
@@ -123,16 +126,24 @@ def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
             metadata={'sentiment': data['sentiment'], 'expected': valid_sentiments}
         )
 
-    # Validate confidence range
-    if not isinstance(data['confidence'], (int, float)) or not 0 <= data['confidence'] <= 1:
-        log_system_event(
-            level='WARNING',
-            component='gemini_client',
-            message='Invalid confidence value in Gemini response',
-            metadata={'confidence': data['confidence']}
-        )
+    # Validate confidence range (only if present)
+    confidence = data.get('confidence')
+    if confidence is not None:
+        if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+            log_system_event(
+                level='WARNING',
+                component='gemini_client',
+                message='Invalid confidence value in Gemini response',
+                metadata={'confidence': confidence}
+            )
 
-    return data
+    # Return with confidence set to None if missing
+    return {
+        'sentiment': data['sentiment'],
+        'reasoning': data['reasoning'],
+        'confidence': confidence,
+        'raw_response': data
+    }
 
 
 def _is_rate_limit_error(error_message: str) -> bool:

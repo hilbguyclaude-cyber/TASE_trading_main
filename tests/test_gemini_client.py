@@ -256,12 +256,18 @@ def test_prompt_format():
         call_args = mock_model.generate_content.call_args
         prompt = call_args[0][0]
 
-        # Verify prompt contains all required elements
+        # Verify prompt contains required elements (NOT ticker - removed per Task 4)
         assert "Bank Leumi" in prompt
-        assert "LUMI" in prompt
         assert "Earnings Report" in prompt
         assert "Strong quarterly results" in prompt
-        assert "POSITIVE" in prompt
-        assert "NEGATIVE" in prompt
-        assert "NEUTRAL" in prompt
+
+        # Verify 3-part structure markers
+        assert "Persona:" in prompt
+        assert "Company Name:" in prompt
+        assert "Response Format:" in prompt
+
+        # Verify new sentiment format phrases are mentioned
+        assert "positive sentiment" in prompt
+        assert "negative sentiment" in prompt
+        assert "neutral" in prompt
         assert "Tel Aviv Stock Exchange" in prompt
