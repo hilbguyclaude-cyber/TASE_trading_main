@@ -36,6 +36,9 @@ from lib.trading_logic import should_buy
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+# Configuration constants
+SLOW_GEMINI_RESPONSE_THRESHOLD_MS = 5000  # Warn if Gemini takes >5s (typical response is 1-3s)
+
 
 def should_create_position() -> bool:
     """
@@ -99,7 +102,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
         logger.info(f"[GEMINI] API response received in {gemini_duration:.0f}ms")
 
         # Log if Gemini was slow
-        if gemini_duration > 5000:
+        if gemini_duration > SLOW_GEMINI_RESPONSE_THRESHOLD_MS:
             logger.warning(f"[GEMINI] SLOW RESPONSE: {gemini_duration:.0f}ms for {announcement_id}")
 
         # Update announcements table
@@ -124,13 +127,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
 
         logger.info(f"[GEMINI] Inserted audit record into gemini_analyses")
 
-        # TODO: Task 9 will add position creation here
-        # Temporary return for incomplete implementation
-        return {
-            'success': False,
-            'error': 'Not yet implemented - Tasks 9-10 incomplete',
-            'announcement_id': announcement_id
-        }
+        # TODO: Task 9 will add position creation and success return here
 
     except Exception as e:
         # Temporary exception handler - will be replaced in Task 10
