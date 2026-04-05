@@ -78,16 +78,17 @@ You must return your analysis strictly as a JSON object with exactly two keys:
 
 def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
     """
-    Parse and validate Gemini API response.
+    Parse and validate Gemini API JSON response.
 
-    Args:
-        response_text: Raw response text from Gemini
+    Accepts both formats:
+    - Old: "POSITIVE", "NEGATIVE", "NEUTRAL"
+    - New: "positive sentiment", "negative sentiment", "neutral"
 
     Returns:
-        Dict with sentiment, confidence (optional), and reasoning
+        Dict with sentiment, reasoning, confidence (optional), and raw_response
 
     Raises:
-        ValueError: If response is invalid JSON or missing required fields
+        ValueError: If JSON is invalid or required fields missing
     """
     try:
         data = json.loads(response_text)
@@ -184,43 +185,19 @@ def analyze_announcement_sentiment(
     max_retries: int = 3
 ) -> Dict[str, Any]:
     """
-    Analyze TASE announcement sentiment using Gemini 1.5 Flash.
-
-    Makes API call to Gemini with retry logic for rate limiting.
-    Returns sentiment classification, confidence score, and reasoning.
-
-    Args:
-        company_name: Name of the company
-        ticker: Stock ticker symbol
-        title: Announcement title
-        content: Announcement content
-        max_retries: Maximum number of retry attempts (default: 3)
+    Call Gemini API with explicit timeout.
 
     Returns:
-        Dict with keys:
-            - sentiment: 'POSITIVE', 'NEGATIVE', or 'NEUTRAL'
-            - confidence: float between 0.0 and 1.0
-            - reasoning: str explanation of the sentiment
+        Dict with:
+        - sentiment: str - 'positive', 'negative', or 'neutral'
+                          (accepts both phrase format from Gemini and normalized format)
+        - reasoning: str - Explanation of sentiment
+        - confidence: float or None - Confidence score (0.0-1.0), None if not provided
+        - raw_response: dict - Full API response for audit
 
     Raises:
-        GeminiRateLimitError: If rate limit exceeded after max retries
-        GeminiAuthError: If API authentication fails
-        ValueError: If response format is invalid
-        Exception: For other API errors
-
-    Example:
-        >>> result = analyze_announcement_sentiment(
-        ...     company_name="Bank Leumi",
-        ...     ticker="LUMI",
-        ...     title="Q4 Earnings",
-        ...     content="15% profit increase..."
-        ... )
-        >>> print(result)
-        {
-            'sentiment': 'POSITIVE',
-            'confidence': 0.85,
-            'reasoning': 'Strong earnings growth...'
-        }
+        TimeoutError: If Gemini API exceeds 10s timeout
+        ValueError: If response parsing fails
     """
     # Get API key from environment
     api_key = os.getenv('GEMINI_API_KEY')
