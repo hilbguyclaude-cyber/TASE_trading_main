@@ -48,12 +48,12 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       </td>
 
       {/* 2. Company Name (Hebrew) - Sticky */}
-      <td style={{ position: 'sticky', left: '80px', background: 'white', zIndex: 10, minWidth: '180px', padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', fontWeight: 500, borderBottom: '1px solid #e5e7eb' }}>
+      <td style={{ position: 'sticky', left: '80px', background: 'white', zIndex: 10, minWidth: '180px', padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', whiteSpace: 'nowrap', borderRight: '2px solid #d1d5db', fontWeight: 500, borderBottom: '1px solid #e5e7eb' }}>
         {announcement.company_name}
       </td>
 
-      {/* 3. Title - Sticky */}
-      <td style={{ position: 'sticky', left: '260px', background: 'white', zIndex: 10, minWidth: '300px', padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', borderRight: '2px solid #d1d5db', borderBottom: '1px solid #e5e7eb' }}>
+      {/* 3. Title - Scrollable */}
+      <td style={{ padding: '20px 16px', fontSize: '14px', color: '#111827', textAlign: 'right', minWidth: '300px', borderBottom: '1px solid #e5e7eb' }}>
         {announcement.title}
       </td>
 
