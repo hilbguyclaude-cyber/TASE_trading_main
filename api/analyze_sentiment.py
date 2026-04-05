@@ -65,26 +65,22 @@ def create_trading_position(announcement: Dict[str, Any], sentiment_result: Dict
             fallback_price=None
         )
 
-        # Create position
+        # Default to 100 shares (TODO: calculate based on position_size_ils / entry_price)
+        # Create position matching database schema (announcement_id, ticker, entry_price, entry_time, quantity, status)
         position_data = {
+            'announcement_id': announcement['id'],  # UUID
             'ticker': announcement['ticker'],
-            'company_name': announcement['company_name'],
-            'announcement_id': announcement['id'],
             'entry_price': current_price,
-            'peak_price': current_price,
-            'position_size_ils': 1000.0,  # Default position size
             'entry_time': get_israel_time().isoformat(),
-            'sentiment': sentiment_result['sentiment'],
-            'confidence': None,
-            'reasoning': sentiment_result['reasoning'],
-            'entry_reason': 'Positive sentiment from Gemini analysis'
+            'quantity': 100,  # Default quantity
+            'status': 'open'
         }
 
         client.table('positions').insert(position_data).execute()
 
         logger.info(
             f"[GEMINI] Created position for {announcement['ticker']}: "
-            f"₪{position_data['position_size_ils']:.2f} @ {current_price:.2f}"
+            f"{position_data['quantity']} shares @ {current_price:.2f}"
         )
 
     except Exception as e:
