@@ -312,6 +312,10 @@ def handler(request):
             logger.error(f"[HANDLER] Invalid JSON in POST request: {str(e)}")
             return {'error': 'Invalid JSON'}, 400
 
+        if data is None:
+            logger.error("[HANDLER] Missing or invalid JSON body in POST request")
+            return {'error': 'JSON body required'}, 400
+
         announcement_id = data.get('announcement_id')
 
         if not announcement_id:
