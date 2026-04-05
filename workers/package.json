@@ -1,0 +1,13 @@
+{
+  "name": "queue-processor-worker",
+  "version": "1.0.0",
+  "description": "Railway worker for processing announcement queue",
+  "main": "queue-processor.js",
+  "scripts": {
+    "start": "node queue-processor.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
