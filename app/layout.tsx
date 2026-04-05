@@ -23,11 +23,6 @@ export default function RootLayout({
             <div className="flex justify-between items-center">
               {/* Logo */}
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">TASE Trading</h1>
                   <p className="text-xs text-gray-500">AI-Powered System</p>
