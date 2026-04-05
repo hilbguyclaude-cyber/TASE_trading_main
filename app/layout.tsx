@@ -1,6 +1,5 @@
 'use client'
 
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
