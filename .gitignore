@@ -31,3 +31,10 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Superpowers
+.superpowers/
+
+# Next.js
+next-env.d.ts
+tsconfig.tsbuildinfo
