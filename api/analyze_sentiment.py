@@ -200,12 +200,34 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'error_message': str(e),
                 'processing_time_ms': int(duration)
             }).execute()
-        except:
+        except Exception:
             pass
 
         return {
             'success': False,
             'error': 'timeout',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except (GeminiAuthError, GeminiRateLimitError) as e:
+        error_type = 'auth_error' if isinstance(e, GeminiAuthError) else 'rate_limit'
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ {error_type.upper()} after {duration:.0f}ms for {announcement_id}: {str(e)}")
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': error_type,
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except Exception:
+            pass
+
+        return {
+            'success': False,
+            'error': error_type,
             'error_message': str(e),
             'announcement_id': announcement_id
         }
@@ -221,7 +243,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'error_message': str(e),
                 'processing_time_ms': int(duration)
             }).execute()
-        except:
+        except Exception:
             pass
 
         return {
@@ -231,7 +253,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
             'announcement_id': announcement_id
         }
 
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, ValueError) as e:
         logger.error(f"[GEMINI] ✗ INVALID JSON RESPONSE for {announcement_id}: {str(e)}")
 
         try:
@@ -241,7 +263,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'error_message': str(e),
                 'processing_time_ms': int((time.time() - start_time) * 1000)
             }).execute()
-        except:
+        except Exception:
             pass
 
         return {
@@ -262,7 +284,7 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'error_message': str(e),
                 'processing_time_ms': int(duration)
             }).execute()
-        except:
+        except Exception:
             pass
 
         return {
