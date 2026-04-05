@@ -26,44 +26,54 @@ class GeminiAuthError(Exception):
 
 def _build_analysis_prompt(
     company_name: str,
-    ticker: str,
     title: str,
-    content: str
+    content: str,
+    additional_file_link: str = None
 ) -> str:
     """
-    Build the sentiment analysis prompt for Gemini.
-
-    Args:
-        company_name: Name of the company
-        ticker: Stock ticker symbol
-        title: Announcement title
-        content: Announcement content
-
-    Returns:
-        str: Formatted prompt for Gemini API
+    Build the analysis prompt using the user's exact 3-part format:
+    1. System Instructions (Persona & Rules)
+    2. User Prompt Template (Data Input)
+    3. Output Formatting Instructions
     """
-    return f"""You are analyzing Tel Aviv Stock Exchange (TASE) announcements to determine trading sentiment.
 
-Company: {company_name}
-Ticker: {ticker}
-Announcement Title: {title}
-Announcement Content: {content}
+    # Part 1: System Instructions (The Persona & Rules)
+    system_instructions = """**Persona:**
+You are an expert financial analyst and quantitative trading specialist with profound expertise in the Israeli capital markets and the Tel Aviv Stock Exchange (TASE). You have comprehensive knowledge of Israeli public companies, their historical market behavior, their industry sectors, and exactly how their stock prices react to specific corporate announcements.
 
-Analyze the sentiment and provide:
-1. Sentiment: POSITIVE, NEGATIVE, or NEUTRAL
-2. Confidence: 0.00 to 1.00
-3. Reasoning: Brief explanation (2-3 sentences)
+**Task:**
+You will be provided with a corporate announcement, including its title, content, and additional reference material. Your objective is to conduct an in-depth analysis of this announcement and predict the immediate short-term impact on the company's stock price, specifically focusing on the next 60 minutes of trading.
 
-POSITIVE = likely price increase
-NEGATIVE = likely price decrease
-NEUTRAL = no clear directional impact
+**Analysis Criteria:**
+You must evaluate the expected price action without requiring any external prompts. Base your analysis on:
+1. The language, tone, materiality, and financial/business implications of the announcement.
+2. Your pre-existing knowledge of the specific company, its baseline performance, and how it has historically reacted to similar news.
+3. Your knowledge of similar companies, industry peers, and the broader context of the TASE.
 
-Respond ONLY with valid JSON:
-{{
-  "sentiment": "POSITIVE",
-  "confidence": 0.85,
-  "reasoning": "Strong earnings..."
-}}"""
+**Output Categories:**
+You must classify the sentiment into exactly one of the following three categories. Pay strict attention to the 1% threshold:
+* "positive sentiment": You have a high level of confidence that the stock price will RISE by MORE THAN 1% in the next 60 minutes. This requires a strong, material catalyst.
+* "negative sentiment": You have a high level of confidence that the stock price will DROP in the next 60 minutes.
+* "neutral": The stock is not expected to rise by more than 1% or drop significantly. Use this if the news is already priced in, immaterial, ambiguous, or lacks the necessary confidence level for a definitive move."""
+
+    # Part 2: User Prompt Template (The Data Input)
+    file_section = f"\n**Additional File Link:** {additional_file_link}" if additional_file_link else ""
+
+    user_prompt = f"""Please analyze the following corporate announcement and determine the short-term market reaction:
+
+**Company Name:** {company_name}
+**Announcement Title:** {title}
+**Announcement Content:** {content}{file_section}"""
+
+    # Part 3: Output Formatting Instructions
+    output_format = """
+**Response Format:**
+You must return your analysis strictly as a JSON object with exactly two keys:
+1. "sentiment": Must be exactly one of the following strings: "positive sentiment", "negative sentiment", or "neutral".
+2. "reasoning": A concise, 3 to 4 sentence analytical justification for your decision. Explain the specific catalyst, why it relates to the company's TASE history, and why it does or does not meet the strict >1% movement threshold within a 60-minute window."""
+
+    # Combine all parts
+    return f"{system_instructions}\n\n{user_prompt}\n{output_format}"
 
 
 def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
@@ -216,7 +226,7 @@ def analyze_announcement_sentiment(
     model = genai.GenerativeModel('gemini-1.5-flash')
 
     # Build prompt
-    prompt = _build_analysis_prompt(company_name, ticker, title, content)
+    prompt = _build_analysis_prompt(company_name, title, content)
 
     # Retry loop with exponential backoff
     last_error = None
