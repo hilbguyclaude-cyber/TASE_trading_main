@@ -18,6 +18,7 @@ import logging
 import time
 import sys
 import os
+import requests
 
 # Add lib to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -187,12 +188,87 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
             'processing_time_ms': int(total_duration)
         }
 
-    except Exception as e:
-        # Temporary exception handler - will be replaced in Task 10
-        logger.error(f"[GEMINI] Error analyzing announcement {announcement_id}: {str(e)}")
+    except TimeoutError as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ TIMEOUT after {duration:.0f}ms for {announcement_id}: {str(e)}")
+
+        # Log to gemini_errors table
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'timeout',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except:
+            pass
+
         return {
             'success': False,
-            'error': str(e),
+            'error': 'timeout',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except requests.exceptions.Timeout as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ NETWORK TIMEOUT after {duration:.0f}ms for {announcement_id}")
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'network_timeout',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except:
+            pass
+
+        return {
+            'success': False,
+            'error': 'network_timeout',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except json.JSONDecodeError as e:
+        logger.error(f"[GEMINI] ✗ INVALID JSON RESPONSE for {announcement_id}: {str(e)}")
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'invalid_json',
+                'error_message': str(e),
+                'processing_time_ms': int((time.time() - start_time) * 1000)
+            }).execute()
+        except:
+            pass
+
+        return {
+            'success': False,
+            'error': 'invalid_json',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except Exception as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ ERROR after {duration:.0f}ms for {announcement_id}: {str(e)}", exc_info=True)
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'unknown',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except:
+            pass
+
+        return {
+            'success': False,
+            'error': 'unknown',
+            'error_message': str(e),
             'announcement_id': announcement_id
         }
 
