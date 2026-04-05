@@ -84,11 +84,51 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'announcement_id': announcement_id
             }
 
-        # TODO: Tasks 8-10 will add Gemini call, position creation, and error handling here
+        # Call Gemini with timeout tracking
+        logger.info(f"[GEMINI] Calling Gemini API for: {announcement['company_name']}")
+        gemini_start = time.time()
+
+        sentiment_result = analyze_announcement_sentiment(
+            company_name=announcement['company_name'],
+            ticker=announcement['ticker'],
+            title=announcement['title'],
+            content=announcement['content']
+        )
+
+        gemini_duration = (time.time() - gemini_start) * 1000
+        logger.info(f"[GEMINI] API response received in {gemini_duration:.0f}ms")
+
+        # Log if Gemini was slow
+        if gemini_duration > 5000:
+            logger.warning(f"[GEMINI] SLOW RESPONSE: {gemini_duration:.0f}ms for {announcement_id}")
+
+        # Update announcements table
+        logger.info(f"[GEMINI] Updating database with sentiment: {sentiment_result['sentiment']}")
+        client.table('announcements').update({
+            'sentiment': sentiment_result['sentiment'],
+            'confidence': None,
+            'reasoning': sentiment_result['reasoning'],
+            'analyzed': True
+        }).eq('id', announcement_id).execute()
+
+        # Insert into gemini_analyses audit table
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        client.table('gemini_analyses').insert({
+            'announcement_id': announcement_id,
+            'sentiment': sentiment_result['sentiment'],
+            'reasoning': sentiment_result['reasoning'],
+            'confidence': None,
+            'raw_response': sentiment_result['raw_response'],
+            'processing_time_ms': processing_time_ms
+        }).execute()
+
+        logger.info(f"[GEMINI] Inserted audit record into gemini_analyses")
+
+        # TODO: Task 9 will add position creation here
         # Temporary return for incomplete implementation
         return {
             'success': False,
-            'error': 'Not yet implemented - Tasks 8-10 incomplete',
+            'error': 'Not yet implemented - Tasks 9-10 incomplete',
             'announcement_id': announcement_id
         }
 
