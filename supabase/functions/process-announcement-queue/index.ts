@@ -40,10 +40,14 @@ serve(async (req) => {
     for (const item of pendingItems) {
       try {
         // Mark as processing
-        await supabaseClient
+        const { error: updateError } = await supabaseClient
           .from('announcement_processing_queue')
           .update({ status: 'processing' })
           .eq('id', item.id)
+
+        if (updateError) {
+          throw new Error(`Failed to update status: ${updateError.message}`)
+        }
 
         console.log(`[QUEUE] Processing ${item.announcement_id}`)
 
@@ -62,10 +66,10 @@ serve(async (req) => {
           throw new Error(`API returned ${response.status}`)
         }
 
-        const result = await response.json()
+        await response.json() // Parse to validate, result used in later task
 
         // Mark as completed
-        await supabaseClient
+        const { error: completeError } = await supabaseClient
           .from('announcement_processing_queue')
           .update({
             status: 'completed',
@@ -73,13 +77,18 @@ serve(async (req) => {
           })
           .eq('id', item.id)
 
+        if (completeError) {
+          throw new Error(`Failed to update status: ${completeError.message}`)
+        }
+
         console.log(`[QUEUE] ✓ Completed ${item.announcement_id}`)
         results.push({ id: item.id, success: true })
 
       } catch (error) {
         console.error(`[QUEUE] ✗ Failed ${item.announcement_id}:`, error)
         // Error handling will be added in next step
-        results.push({ id: item.id, success: false, error: error.message })
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        results.push({ id: item.id, success: false, error: errorMessage })
       }
     }
 
