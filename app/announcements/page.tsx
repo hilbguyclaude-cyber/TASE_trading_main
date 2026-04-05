@@ -1,10 +1,15 @@
-import { supabase, type Announcement } from '../lib/supabase'
+import { supabase, isSupabaseConfigured, type Announcement } from '../lib/supabase'
 import { AnnouncementRow } from './AnnouncementRow'
 
 export const revalidate = 30 // Revalidate every 30 seconds
 // Force deployment: 2026-04-04
 
 async function getAnnouncements() {
+  // Return empty data if Supabase is not configured (build time)
+  if (!isSupabaseConfigured) {
+    return []
+  }
+
   try {
     const { data: announcements } = await supabase
       .from('announcements')

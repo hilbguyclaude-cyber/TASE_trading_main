@@ -1,4 +1,4 @@
-import { supabase, type Announcement, type Position, type SystemStatus } from './lib/supabase'
+import { supabase, isSupabaseConfigured, type Announcement, type Position, type SystemStatus } from './lib/supabase'
 
 // Server Component - fetches data on the server
 export const revalidate = 60 // Revalidate every 60 seconds
@@ -18,6 +18,23 @@ interface DashboardData {
 }
 
 async function getDashboardData(): Promise<DashboardData> {
+  // Return empty data if Supabase is not configured (build time)
+  if (!isSupabaseConfigured) {
+    return {
+      systemStatus: null,
+      recentAnnouncements: [],
+      recentPositions: [],
+      stats: {
+        totalPositions: 0,
+        openPositions: 0,
+        closedPositions: 0,
+        totalProfitLoss: 0,
+        winRate: 0,
+        avgHoldTime: 0
+      }
+    }
+  }
+
   try {
     // Fetch system status
     const { data: systemStatus } = await supabase
