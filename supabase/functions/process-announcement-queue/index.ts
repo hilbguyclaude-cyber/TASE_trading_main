@@ -35,7 +35,63 @@ serve(async (req) => {
 
     console.log(`[QUEUE] Found ${pendingItems.length} pending items`)
 
-    // Processing logic will be added in next step
+    // 2. Process each item
+    const results = []
+    for (const item of pendingItems) {
+      try {
+        // Mark as processing
+        await supabaseClient
+          .from('announcement_processing_queue')
+          .update({ status: 'processing' })
+          .eq('id', item.id)
+
+        console.log(`[QUEUE] Processing ${item.announcement_id}`)
+
+        // Call Vercel API
+        const response = await fetch(
+          `${VERCEL_API_URL}/api/analyze_sentiment`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ announcement_id: item.announcement_id }),
+            signal: AbortSignal.timeout(PROCESSING_TIMEOUT_MS)
+          }
+        )
+
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}`)
+        }
+
+        const result = await response.json()
+
+        // Mark as completed
+        await supabaseClient
+          .from('announcement_processing_queue')
+          .update({
+            status: 'completed',
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', item.id)
+
+        console.log(`[QUEUE] ✓ Completed ${item.announcement_id}`)
+        results.push({ id: item.id, success: true })
+
+      } catch (error) {
+        console.error(`[QUEUE] ✗ Failed ${item.announcement_id}:`, error)
+        // Error handling will be added in next step
+        results.push({ id: item.id, success: false, error: error.message })
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        processed: results.length,
+        succeeded: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length,
+        results: results
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
     console.error('[QUEUE] Edge function error:', error)
