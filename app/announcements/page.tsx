@@ -25,12 +25,13 @@ async function getAnnouncements() {
 }
 
 function formatDateTime(isoString: string): string {
-  return new Date(isoString).toLocaleString('he-IL', {
+  return new Date(isoString).toLocaleString('en-GB', {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: false
   })
 }
 
