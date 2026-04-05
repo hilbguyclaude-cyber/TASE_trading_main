@@ -110,10 +110,41 @@ CREATE INDEX IF NOT EXISTS idx_gemini_errors_type
   ON gemini_errors(error_type);
 
 -- =====================================================
+-- Trigger Function: Auto-Queue New Announcements
+-- =====================================================
+-- Automatically adds new announcements to processing queue
+-- when they are inserted into the announcements table
+-- =====================================================
+
+-- Trigger function: Queue new announcements for processing
+CREATE OR REPLACE FUNCTION queue_announcement_for_processing()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Insert into processing queue
+  INSERT INTO announcement_processing_queue (announcement_id, status)
+  VALUES (NEW.id, 'pending');
+
+  -- Log for debugging
+  RAISE NOTICE 'Queued announcement % for processing', NEW.id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: Fire after INSERT on announcements
+CREATE TRIGGER on_announcement_insert
+  AFTER INSERT ON announcements
+  FOR EACH ROW
+  EXECUTE FUNCTION queue_announcement_for_processing();
+
+-- =====================================================
 -- Migration Complete
 -- =====================================================
 -- Tables created:
 -- 1. announcement_processing_queue - Processing queue with retry logic
 -- 2. gemini_analyses - Audit table for successful API responses
 -- 3. gemini_errors - Error tracking for failed analyses
+--
+-- Triggers created:
+-- 1. on_announcement_insert - Auto-queues new announcements
 -- =====================================================
