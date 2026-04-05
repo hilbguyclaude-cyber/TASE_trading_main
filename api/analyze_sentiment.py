@@ -45,6 +45,46 @@ def should_create_position() -> bool:
     return os.getenv('AUTO_CREATE_POSITIONS', 'true').lower() == 'true'
 
 
+def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
+    """
+    Analyze a single announcement by ID (called by database trigger).
+
+    Returns:
+        {
+            'success': bool,
+            'announcement_id': str,
+            'sentiment': str,
+            'processing_time_ms': int,
+            'error': str (if failed),
+            'skipped': bool (if already analyzed)
+        }
+    """
+    start_time = time.time()
+    logger.info(f"[GEMINI] Starting analysis for announcement: {announcement_id}")
+
+    try:
+        # Fetch the announcement
+        logger.info(f"[GEMINI] Fetching announcement data: {announcement_id}")
+        client = get_supabase_client()
+        result = client.table('announcements')\
+            .select('*')\
+            .eq('id', announcement_id)\
+            .single()\
+            .execute()
+
+        announcement = result.data
+
+        # Skip if already analyzed
+        if announcement.get('analyzed', False):
+            logger.info(f"[GEMINI] Already analyzed, skipping: {announcement_id}")
+            return {
+                'success': True,
+                'message': 'Already analyzed',
+                'skipped': True,
+                'announcement_id': announcement_id
+            }
+
+
 class handler(BaseHTTPRequestHandler):
     """Vercel serverless function handler"""
 
