@@ -51,3 +51,25 @@ async function processQueue() {
     console.error(`[WORKER] ✗ Error:`, error.message)
   }
 }
+
+// Main loop
+console.log('[WORKER] Starting queue processor...')
+console.log(`[WORKER] Polling interval: ${POLL_INTERVAL_MS}ms (${POLL_INTERVAL_MS/1000}s)`)
+console.log(`[WORKER] Supabase Function: ${SUPABASE_FUNCTION_URL}`)
+
+// Set interval for polling
+setInterval(processQueue, POLL_INTERVAL_MS)
+
+// Initial run (don't wait 5s for first poll)
+processQueue()
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('[WORKER] Received SIGTERM, shutting down...')
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  console.log('[WORKER] Received SIGINT, shutting down...')
+  process.exit(0)
+})
