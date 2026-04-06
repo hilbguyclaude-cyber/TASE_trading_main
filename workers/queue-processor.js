@@ -15,11 +15,31 @@ if (!SUPABASE_ANON_KEY) {
   process.exit(1)
 }
 
-// Function implementations will be added in next steps
+// State management for graceful shutdown and request tracking
+let isShuttingDown = false
+let isProcessing = false
+let activeRequest = null
 
 async function processQueue() {
+  if (isShuttingDown) {
+    console.log('[WORKER] Shutdown in progress, skipping poll')
+    return
+  }
+
+  if (isProcessing) {
+    console.log('[WORKER] Previous poll still running, skipping...')
+    return
+  }
+
+  isProcessing = true
+  activeRequest = { timestamp: Date.now() }
+
   try {
     console.log(`[WORKER] ${new Date().toISOString()} - Polling queue...`)
+
+    // Manual AbortController for Node.js compatibility
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 45000)
 
     const response = await fetch(
       `${SUPABASE_FUNCTION_URL}/process-announcement-queue`,
@@ -29,9 +49,11 @@ async function processQueue() {
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         },
-        signal: AbortSignal.timeout(45000)  // 45s timeout (Edge Function has 30s + buffer)
+        signal: controller.signal
       }
     )
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -48,7 +70,17 @@ async function processQueue() {
       console.log(`[WORKER] ✓ Processed ${result.processed} items (${result.succeeded} succeeded, ${result.failed} failed)`)
     }
   } catch (error) {
-    console.error(`[WORKER] ✗ Error:`, error.message)
+    // Differentiate error types
+    if (error.name === 'AbortError') {
+      console.error(`[WORKER] ✗ Timeout after 45s - Edge Function not responding`)
+    } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      console.error(`[WORKER] ✗ Network error:`, error.message)
+    } else {
+      console.error(`[WORKER] ✗ Error:`, error.message)
+    }
+  } finally {
+    activeRequest = null
+    isProcessing = false
   }
 }
 
@@ -58,18 +90,32 @@ console.log(`[WORKER] Polling interval: ${POLL_INTERVAL_MS}ms (${POLL_INTERVAL_M
 console.log(`[WORKER] Supabase Function: ${SUPABASE_FUNCTION_URL}`)
 
 // Set interval for polling
-setInterval(processQueue, POLL_INTERVAL_MS)
+const pollInterval = setInterval(processQueue, POLL_INTERVAL_MS)
 
 // Initial run (don't wait 5s for first poll)
 processQueue()
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('[WORKER] Received SIGTERM, shutting down...')
-  process.exit(0)
-})
+// Graceful shutdown function
+async function shutdown(signal) {
+  console.log(`[WORKER] Received ${signal}, shutting down gracefully...`)
+  isShuttingDown = true
+  clearInterval(pollInterval)
 
-process.on('SIGINT', () => {
-  console.log('[WORKER] Received SIGINT, shutting down...')
+  // Wait for active request with timeout
+  const startTime = Date.now()
+  while (activeRequest && (Date.now() - startTime) < 25000) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+
+  if (activeRequest) {
+    console.log('[WORKER] Force shutdown - request still in progress')
+  } else {
+    console.log('[WORKER] Graceful shutdown complete')
+  }
+
   process.exit(0)
-})
+}
+
+// Signal handlers
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
