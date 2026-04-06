@@ -418,6 +418,37 @@ Before going live with real trading:
 
 ---
 
+## Deployment History
+
+### Migration: 20260405_create_gemini_integration.sql
+
+**Date:** 2026-04-06  
+**Environment:** Production (egcgmgelkdqrrbnsbaky)  
+**Status:** ✅ Deployed Successfully
+
+**Changes Applied:**
+- Created table: `announcement_processing_queue` (status tracking for Gemini processing)
+- Created table: `gemini_analyses` (stores full sentiment analysis results)
+- Created table: `gemini_errors` (audit log for failures)
+- Created trigger: `on_announcement_insert` (auto-queues new announcements)
+- Created function: `queue_announcement_for_processing()` (trigger implementation)
+
+**Verification:**
+- ✅ All 3 tables created with proper indexes
+- ✅ Trigger fires correctly on INSERT to announcements
+- ✅ Test announcement → queue entry created → cleaned up
+
+**Rollback Procedure (if needed):**
+```sql
+DROP TRIGGER IF EXISTS on_announcement_insert ON announcements;
+DROP FUNCTION IF EXISTS queue_announcement_for_processing();
+DROP TABLE IF EXISTS gemini_errors CASCADE;
+DROP TABLE IF EXISTS gemini_analyses CASCADE;
+DROP TABLE IF EXISTS announcement_processing_queue CASCADE;
+```
+
+---
+
 **🎉 You now have a production-ready algorithmic trading system!**
 
 Questions? Check the logs first:

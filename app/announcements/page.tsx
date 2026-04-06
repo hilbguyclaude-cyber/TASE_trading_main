@@ -37,7 +37,7 @@ function formatDateTime(isoString: string): string {
 
 export default async function AnnouncementsPage() {
   const announcements = await getAnnouncements()
-  const tradeableCount = announcements.filter(a => a.sentiment === 'POSITIVE').length
+  const tradeableCount = announcements.filter(a => a.sentiment === 'positive').length
   const processedCount = announcements.filter(a => a.analyzed && a.sentiment !== 'PENDING').length
   const pendingCount = announcements.filter(a => !a.analyzed || a.sentiment === 'PENDING').length
 

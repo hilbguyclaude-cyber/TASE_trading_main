@@ -38,3 +38,4 @@ Thumbs.db
 # Next.js
 next-env.d.ts
 tsconfig.tsbuildinfo
+supabase/.temp/

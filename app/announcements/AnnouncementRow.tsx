@@ -29,9 +29,9 @@ export function AnnouncementRow({ announcement, index }: AnnouncementRowProps) {
       display: 'inline-block'
     }
 
-    if (sentiment === 'POSITIVE') {
+    if (sentiment === 'positive') {
       return { ...baseStyle, background: '#dcfce7', color: '#16a34a', border: '1px solid #bbf7d0' }
-    } else if (sentiment === 'NEGATIVE') {
+    } else if (sentiment === 'negative') {
       return { ...baseStyle, background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }
     } else if (sentiment === 'PENDING' || sentiment === null) {
       return { ...baseStyle, background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }

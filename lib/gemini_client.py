@@ -7,8 +7,6 @@ TASE announcements and determine trading sentiment with confidence scores.
 
 import os
 import json
-import time
-import logging
 from typing import Dict, Any
 import google.generativeai as genai
 import google.api_core.exceptions
@@ -80,80 +78,6 @@ You must return your analysis strictly as a JSON object with exactly two keys:
     return f"{system_instructions}\n\n{user_prompt}\n{output_format}"
 
 
-def _parse_gemini_response(response_text: str) -> Dict[str, Any]:
-    """
-    Parse and validate Gemini API response.
-
-    Args:
-        response_text: Raw response text from Gemini
-
-    Returns:
-        Dict with sentiment, confidence, and reasoning
-
-    Raises:
-        ValueError: If response is invalid JSON or missing required fields
-    """
-    try:
-        data = json.loads(response_text)
-    except json.JSONDecodeError as e:
-        log_system_event(
-            level='ERROR',
-            component='gemini_client',
-            message='Failed to parse JSON response from Gemini',
-            metadata={'response': response_text, 'error': str(e)}
-        )
-        raise ValueError(f"Failed to parse JSON response: {e}")
-
-    # Validate required fields
-    required_fields = ['sentiment', 'confidence', 'reasoning']
-    missing_fields = [field for field in required_fields if field not in data]
-
-    if missing_fields:
-        log_system_event(
-            level='ERROR',
-            component='gemini_client',
-            message='Missing required fields in Gemini response',
-            metadata={'response': data, 'missing_fields': missing_fields}
-        )
-        raise ValueError(f"Missing required field(s): {', '.join(missing_fields)}")
-
-    # Validate sentiment value
-    valid_sentiments = ['POSITIVE', 'NEGATIVE', 'NEUTRAL']
-    if data['sentiment'] not in valid_sentiments:
-        log_system_event(
-            level='WARNING',
-            component='gemini_client',
-            message='Invalid sentiment value in Gemini response',
-            metadata={'sentiment': data['sentiment'], 'expected': valid_sentiments}
-        )
-
-    # Validate confidence range
-    if not isinstance(data['confidence'], (int, float)) or not 0 <= data['confidence'] <= 1:
-        log_system_event(
-            level='WARNING',
-            component='gemini_client',
-            message='Invalid confidence value in Gemini response',
-            metadata={'confidence': data['confidence']}
-        )
-
-    return data
-
-
-def _is_rate_limit_error(error_message: str) -> bool:
-    """
-    Check if error message indicates rate limiting.
-
-    Args:
-        error_message: Error message string
-
-    Returns:
-        bool: True if error is rate limit related
-    """
-    error_lower = error_message.lower()
-    rate_limit_indicators = ['429', 'rate limit', 'quota', 'exhausted']
-    return any(indicator in error_lower for indicator in rate_limit_indicators)
-
-
 def _is_auth_error(error_message: str) -> bool:
     """
     Check if error message indicates authentication failure.
@@ -199,8 +123,20 @@ def analyze_announcement_sentiment(
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
+    # Build prompt
+    prompt = _build_analysis_prompt(company_name, title, content)
+
     try:
-        prompt = _build_analysis_prompt(company_name, title, content)
+        log_system_event(
+            level='INFO',
+            component='gemini_client',
+            message='Calling Gemini API',
+            metadata={
+                'company_name': company_name,
+                'ticker': ticker,
+                'title': title
+            }
+        )
 
         # Call Gemini with 10-second timeout
         response = model.generate_content(
@@ -218,26 +154,92 @@ def analyze_announcement_sentiment(
         # Parse JSON response
         response_json = json.loads(response.text)
 
-        # Normalize sentiment: "positive sentiment" → "positive"
-        raw_sentiment = response_json.get('sentiment', '').lower()
-        if 'positive' in raw_sentiment:
+        # Validate required fields exist
+        if 'sentiment' not in response_json or 'reasoning' not in response_json:
+            error_message = f"Missing required fields in response: {response_json}"
+            log_system_event(
+                level='ERROR',
+                component='gemini_client',
+                message='Gemini response missing required fields',
+                metadata={'response': response_json}
+            )
+            raise ValueError(f"Invalid response structure: missing required fields")
+
+        # Normalize sentiment with exact matching
+        raw_sentiment = response_json.get('sentiment', '').strip().lower()
+        if raw_sentiment == 'positive sentiment':
             sentiment = 'positive'
-        elif 'negative' in raw_sentiment:
+        elif raw_sentiment == 'negative sentiment':
             sentiment = 'negative'
+        elif raw_sentiment == 'neutral':
+            sentiment = 'neutral'
         else:
+            # Log unexpected format but default to neutral
+            log_system_event(
+                level='WARNING',
+                component='gemini_client',
+                message=f'Unexpected sentiment format: {raw_sentiment}',
+                metadata={'raw_sentiment': raw_sentiment}
+            )
             sentiment = 'neutral'
 
-        return {
+        result = {
             'sentiment': sentiment,
             'reasoning': response_json.get('reasoning', ''),
             'confidence': None,  # Not returned by user's prompt
             'raw_response': response_json  # Store full response for audit
         }
 
+        log_system_event(
+            level='INFO',
+            component='gemini_client',
+            message='Successfully analyzed sentiment',
+            metadata={
+                'company_name': company_name,
+                'ticker': ticker,
+                'sentiment': result['sentiment']
+            }
+        )
+
+        return result
+
     except google.api_core.exceptions.DeadlineExceeded:
-        logger.error(f"[GEMINI] API timeout (>10s) for {company_name}")
-        raise TimeoutError(f"Gemini API timeout after 10s")
+        error_message = f"Gemini API timeout after 10s for {company_name}"
+        log_system_event(
+            level='ERROR',
+            component='gemini_client',
+            message=error_message
+        )
+        raise TimeoutError(error_message)
 
     except json.JSONDecodeError as e:
-        logger.error(f"[GEMINI] Invalid JSON response: {response.text}")
+        error_message = f"Invalid JSON response: {response.text}"
+        log_system_event(
+            level='ERROR',
+            component='gemini_client',
+            message='Gemini returned invalid JSON',
+            metadata={'error': str(e), 'response': response.text}
+        )
         raise ValueError(f"Invalid JSON from Gemini: {str(e)}")
+
+    except Exception as e:
+        error_message = str(e)
+
+        # Check for authentication errors
+        if _is_auth_error(error_message):
+            log_system_event(
+                level='ERROR',
+                component='gemini_client',
+                message='Gemini authentication failed',
+                metadata={'error': error_message}
+            )
+            raise GeminiAuthError(f"Authentication failed: {error_message}")
+
+        # For other errors, log and re-raise
+        log_system_event(
+            level='ERROR',
+            component='gemini_client',
+            message='Gemini API call failed',
+            metadata={'error': error_message}
+        )
+        raise

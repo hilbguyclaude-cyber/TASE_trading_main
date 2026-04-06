@@ -23,7 +23,7 @@ export interface Announcement {
   title: string
   content: string
   published_at: string
-  sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | null
+  sentiment: 'positive' | 'negative' | 'neutral' | null
   confidence: number | null
   reasoning: string | null
   analyzed: boolean

@@ -12,12 +12,12 @@ Can be called manually or triggered automatically after announcements are stored
 
 from datetime import datetime
 from typing import Dict, Any, List
-from http.server import BaseHTTPRequestHandler
 import json
 import logging
 import time
 import sys
 import os
+import requests
 
 # Add lib to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -36,6 +36,9 @@ from lib.trading_logic import should_buy
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+# Configuration constants
+SLOW_GEMINI_RESPONSE_THRESHOLD_MS = 5000  # Warn if Gemini takes >5s (typical response is 1-3s)
+
 
 def should_create_position() -> bool:
     """
@@ -43,6 +46,47 @@ def should_create_position() -> bool:
     Reads from environment variable, defaults to True.
     """
     return os.getenv('AUTO_CREATE_POSITIONS', 'true').lower() == 'true'
+
+
+def create_trading_position(announcement: Dict[str, Any], sentiment_result: Dict[str, Any]) -> None:
+    """
+    Create a trading position for a positive sentiment announcement.
+
+    Args:
+        announcement: Announcement data from database
+        sentiment_result: Sentiment analysis result from Gemini
+    """
+    client = get_supabase_client()
+
+    try:
+        # Fetch current price
+        current_price = get_price_with_fallback(
+            announcement['ticker'],
+            fallback_price=None
+        )
+
+        # Default to 100 shares (TODO: calculate based on position_size_ils / entry_price)
+        # Create position matching database schema (announcement_id, ticker, entry_price, entry_time, quantity, status)
+        position_data = {
+            'announcement_id': announcement['id'],  # UUID
+            'ticker': announcement['ticker'],
+            'entry_price': current_price,
+            'entry_time': get_israel_time().isoformat(),
+            'quantity': 100,  # Default quantity
+            'status': 'open'
+        }
+
+        client.table('positions').insert(position_data).execute()
+
+        logger.info(
+            f"[GEMINI] Created position for {announcement['ticker']}: "
+            f"{position_data['quantity']} shares @ {current_price:.2f}"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"[GEMINI] Failed to create position for {announcement['ticker']}: {e}"
+        )
 
 
 def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
@@ -84,41 +128,207 @@ def analyze_single_announcement(announcement_id: str) -> Dict[str, Any]:
                 'announcement_id': announcement_id
             }
 
+        # Call Gemini with timeout tracking
+        logger.info(f"[GEMINI] Calling Gemini API for: {announcement['company_name']}")
+        gemini_start = time.time()
 
-class handler(BaseHTTPRequestHandler):
-    """Vercel serverless function handler"""
+        sentiment_result = analyze_announcement_sentiment(
+            company_name=announcement['company_name'],
+            ticker=announcement['ticker'],
+            title=announcement['title'],
+            content=announcement['content']
+        )
 
-    def do_POST(self):
-        """Handle POST request to analyze sentiments"""
+        gemini_duration = (time.time() - gemini_start) * 1000
+        logger.info(f"[GEMINI] API response received in {gemini_duration:.0f}ms")
+
+        # Log if Gemini was slow
+        if gemini_duration > SLOW_GEMINI_RESPONSE_THRESHOLD_MS:
+            logger.warning(f"[GEMINI] SLOW RESPONSE: {gemini_duration:.0f}ms for {announcement_id}")
+
+        # Update announcements table
+        logger.info(f"[GEMINI] Updating database with sentiment: {sentiment_result['sentiment']}")
+        client.table('announcements').update({
+            'sentiment': sentiment_result['sentiment'],
+            'confidence': None,
+            'reasoning': sentiment_result['reasoning'],
+            'analyzed': True
+        }).eq('id', announcement_id).execute()
+
+        # Insert into gemini_analyses audit table
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        client.table('gemini_analyses').insert({
+            'announcement_id': announcement_id,
+            'sentiment': sentiment_result['sentiment'],
+            'reasoning': sentiment_result['reasoning'],
+            'confidence': None,
+            'raw_response': sentiment_result['raw_response'],
+            'processing_time_ms': processing_time_ms
+        }).execute()
+
+        logger.info(f"[GEMINI] Inserted audit record into gemini_analyses")
+
+        # Optionally create trading position (if flag enabled)
+        if should_create_position() and sentiment_result['sentiment'] == 'positive':
+            logger.info(f"[GEMINI] Creating trading position (auto-create enabled)")
+            create_trading_position(announcement, sentiment_result)
+        elif sentiment_result['sentiment'] != 'positive':
+            logger.info(f"[GEMINI] Skipping position creation (sentiment: {sentiment_result['sentiment']})")
+        else:
+            logger.info(f"[GEMINI] Skipping position creation (auto-create disabled)")
+
+        total_duration = (time.time() - start_time) * 1000
+        logger.info(f"[GEMINI] ✓ Complete in {total_duration:.0f}ms - Sentiment: {sentiment_result['sentiment']}")
+
+        return {
+            'success': True,
+            'announcement_id': announcement_id,
+            'sentiment': sentiment_result['sentiment'],
+            'processing_time_ms': int(total_duration)
+        }
+
+    except TimeoutError as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ TIMEOUT after {duration:.0f}ms for {announcement_id}: {str(e)}")
+
+        # Log to gemini_errors table
         try:
-            # Parse request body (optional parameters)
-            content_length = int(self.headers.get('Content-Length', 0))
-            if content_length > 0:
-                body = self.rfile.read(content_length)
-                params = json.loads(body.decode('utf-8'))
-            else:
-                params = {}
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'timeout',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except Exception:
+            pass
 
-            max_announcements = params.get('max_announcements', 10)
+        return {
+            'success': False,
+            'error': 'timeout',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
 
-            result = analyze_pending_sentiments(max_announcements)
+    except (GeminiAuthError, GeminiRateLimitError) as e:
+        error_type = 'auth_error' if isinstance(e, GeminiAuthError) else 'rate_limit'
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ {error_type.upper()} after {duration:.0f}ms for {announcement_id}: {str(e)}")
 
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(result).encode())
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': error_type,
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except Exception:
+            pass
 
+        return {
+            'success': False,
+            'error': error_type,
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except requests.exceptions.Timeout as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ NETWORK TIMEOUT after {duration:.0f}ms for {announcement_id}")
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'network_timeout',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except Exception:
+            pass
+
+        return {
+            'success': False,
+            'error': 'network_timeout',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.error(f"[GEMINI] ✗ INVALID JSON RESPONSE for {announcement_id}: {str(e)}")
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'invalid_json',
+                'error_message': str(e),
+                'processing_time_ms': int((time.time() - start_time) * 1000)
+            }).execute()
+        except Exception:
+            pass
+
+        return {
+            'success': False,
+            'error': 'invalid_json',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+    except Exception as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[GEMINI] ✗ ERROR after {duration:.0f}ms for {announcement_id}: {str(e)}", exc_info=True)
+
+        try:
+            client.table('gemini_errors').insert({
+                'announcement_id': announcement_id,
+                'error_type': 'unknown',
+                'error_message': str(e),
+                'processing_time_ms': int(duration)
+            }).execute()
+        except Exception:
+            pass
+
+        return {
+            'success': False,
+            'error': 'unknown',
+            'error_message': str(e),
+            'announcement_id': announcement_id
+        }
+
+
+def handler(request):
+    """
+    Vercel serverless function handler.
+
+    Supports two modes:
+    1. POST with announcement_id - Single announcement (database trigger)
+    2. GET with no params - Batch processing (existing cron, backwards compatible)
+    """
+    if request.method == 'POST':
+        # Single announcement mode (database trigger)
+        logger.info("[HANDLER] POST request received for single announcement processing")
+
+        try:
+            data = request.get_json()
         except Exception as e:
-            log_system_event('ERROR', 'analyze_sentiment', f"Function failed: {e}", {})
+            logger.error(f"[HANDLER] Invalid JSON in POST request: {str(e)}")
+            return {'error': 'Invalid JSON'}, 400
 
-            self.send_response(500)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'error': str(e)}).encode())
+        if data is None:
+            logger.error("[HANDLER] Missing or invalid JSON body in POST request")
+            return {'error': 'JSON body required'}, 400
 
-    def do_GET(self):
-        """Handle GET request (same as POST for convenience)"""
-        self.do_POST()
+        announcement_id = data.get('announcement_id')
+
+        if not announcement_id:
+            return {'error': 'announcement_id required'}, 400
+
+        result = analyze_single_announcement(announcement_id)
+        return result, 200 if result.get('success') else 500
+
+    else:
+        # Batch mode (existing cron) - keep for backwards compatibility
+        logger.info("[HANDLER] GET request received for batch processing")
+        result = analyze_pending_sentiments(max_announcements=10)
+        return result, 200
 
 
 def analyze_pending_sentiments(max_announcements: int = 10) -> Dict[str, Any]:
