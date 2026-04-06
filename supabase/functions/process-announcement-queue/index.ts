@@ -19,7 +19,7 @@ serve(async (req) => {
     // 1. Fetch pending items (limit to 10 per cycle)
     const { data: pendingItems, error: fetchError } = await supabaseClient
       .from('announcement_processing_queue')
-      .select('*, announcements(*)')
+      .select('*')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
       .limit(10)
