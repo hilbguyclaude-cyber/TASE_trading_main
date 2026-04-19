@@ -34,6 +34,7 @@ from lib.trading_logic import (
     update_peak_price,
     close_position
 )
+from lib.ibkr_client import get_ibkr_client, IBKRConnectionError, IBKROrderError
 
 
 class handler(BaseHTTPRequestHandler):
@@ -157,8 +158,44 @@ def monitor_positions() -> Dict[str, Any]:
             )
 
             if should_exit:
-                # Close position
-                closed_position = close_position(position_id, current_price, exit_reason)
+                # Execute sell order via IBKR
+                quantity = int(position.get('quantity', 100))
+                ibkr_order_result = None
+
+                try:
+                    ibkr_client = get_ibkr_client()
+                    if ibkr_client.is_connected() or ibkr_client.connect():
+                        ibkr_order_result = ibkr_client.place_order(
+                            symbol=ticker,
+                            quantity=quantity,
+                            action='SELL',
+                            order_type='MKT'
+                        )
+                        log_system_event(
+                            'INFO',
+                            'monitor_positions_cron',
+                            f"IBKR sell order placed for {ticker}: {ibkr_order_result}",
+                            {'order_result': ibkr_order_result}
+                        )
+                except IBKRConnectionError as e:
+                    log_system_event(
+                        'WARNING',
+                        'monitor_positions_cron',
+                        f"IBKR connection failed for {ticker} sell, closing DB position only: {e}",
+                        {'position_id': position_id}
+                    )
+                except IBKROrderError as e:
+                    log_system_event(
+                        'ERROR',
+                        'monitor_positions_cron',
+                        f"IBKR sell order failed for {ticker}: {e}",
+                        {'position_id': position_id}
+                    )
+
+                # Close position in database (use avg_price from IBKR if available and non-zero)
+                ibkr_avg_price = ibkr_order_result.get('avg_price', 0) if ibkr_order_result else 0
+                actual_exit_price = ibkr_avg_price if ibkr_avg_price > 0 else current_price
+                closed_position = close_position(position_id, actual_exit_price, exit_reason)
                 positions_closed += 1
 
                 profit_loss_percent = closed_position['profit_loss_percent']
@@ -172,10 +209,11 @@ def monitor_positions() -> Dict[str, Any]:
                         'position_id': position_id,
                         'ticker': ticker,
                         'entry_price': entry_price,
-                        'exit_price': current_price,
+                        'exit_price': actual_exit_price,
                         'profit_loss_ils': profit_loss_ils,
                         'profit_loss_percent': profit_loss_percent,
-                        'exit_reason': exit_reason
+                        'exit_reason': exit_reason,
+                        'ibkr_order_id': ibkr_order_result.get('order_id') if ibkr_order_result else None
                     }
                 )
 
